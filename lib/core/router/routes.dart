@@ -16,7 +16,7 @@ import 'package:hiddify/features/proxy/overview/proxies_overview_page.dart';
 import 'package:hiddify/features/settings/about/about_page.dart';
 import 'package:hiddify/features/settings/overview/settings_overview_page.dart';
 import 'package:hiddify/utils/utils.dart';
-
+import 'package:hiddify/features/proxy/widget/proxies_modal.dart';
 part 'routes.g.dart';
 
 GlobalKey<NavigatorState>? _dynamicRootKey = useMobileRouter ? rootNavigatorKey : null;
@@ -51,6 +51,13 @@ GlobalKey<NavigatorState>? _dynamicRootKey = useMobileRouter ? rootNavigatorKey 
           path: "quick-settings",
           name: QuickSettingsRoute.name,
         ),
+
+        // Also add this to the HomeRoute routes array:
+        TypedGoRoute<ProxiesModalRoute>(
+          path: "proxies-modal",
+          name: ProxiesModalRoute.name,
+        ),
+
         TypedGoRoute<SettingsRoute>(
           path: "settings",
           name: SettingsRoute.name,
@@ -287,6 +294,23 @@ class QuickSettingsRoute extends GoRouteData {
       fixed: true,
       name: name,
       builder: (controller) => const QuickSettingsModal(),
+    );
+  }
+}
+
+// Add this new route class after QuickSettingsRoute
+class ProxiesModalRoute extends GoRouteData {
+  const ProxiesModalRoute();
+
+  static const name = "Proxies Modal";
+  static final GlobalKey<NavigatorState> $parentNavigatorKey = rootNavigatorKey;
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return BottomSheetPage(
+      fixed: true,
+      name: name,
+      builder: (controller) => ProxiesModal(scrollController: controller),
     );
   }
 }
