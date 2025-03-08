@@ -134,6 +134,7 @@ flutter:
     - assets/images/tray_icon_disconnected.png
     - assets/images/connect_norouz.PNG
     - assets/images/disconnect_norouz.PNG
+    - assets/images/ipmanLogo.svg
 
   fonts:
     - family: Shabnam

@@ -3,7 +3,6 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:hiddify/core/localization/translations.dart';
-import 'package:hiddify/core/widget/animated_visibility.dart';
 import 'package:hiddify/core/widget/shimmer_skeleton.dart';
 import 'package:hiddify/features/proxy/active/active_proxy_notifier.dart';
 import 'package:hiddify/features/proxy/active/ip_widget.dart';
@@ -21,159 +20,115 @@ class ActiveProxyFooter extends HookConsumerWidget {
     final t = ref.watch(translationsProvider);
     final activeProxy = ref.watch(activeProxyNotifierProvider);
     final ipInfo = ref.watch(ipInfoNotifierProvider);
+    final theme = Theme.of(context);
 
-    return AnimatedVisibility(
-      axis: Axis.vertical,
-      visible: activeProxy is AsyncData,
-      child: switch (activeProxy) {
-        AsyncData(value: final proxy) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+    // Always visible footer with custom styling
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 200), // Limit max width
+          child: Container(
+            height: 80,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(100),
+              boxShadow: [
+                BoxShadow(
+                  color: theme.brightness == Brightness.dark ? const Color(0xFF140f1a) : const Color(0xFF271f30),
+                  offset: const Offset(0, 3),
+                  spreadRadius: 4,
+                ),
+              ],
+            ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Flexible(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _InfoProp(
-                        icon: FluentIcons.arrow_routing_20_regular,
-                        text: proxy.selectedName.isNotNullOrBlank
-                            ? proxy.selectedName!
-                            : proxy.name,
-                        semanticLabel: t.proxies.activeProxySemanticLabel,
+                // Refresh button (circle with arrow)
+                Padding(
+                  padding: const EdgeInsets.only(left: 5, right: 0),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        ref.read(ipInfoNotifierProvider.notifier).refresh();
+                      },
+                      customBorder: const CircleBorder(),
+                      highlightColor: theme.colorScheme.primary.withOpacity(0.1),
+                      splashColor: theme.colorScheme.primary.withOpacity(0.2),
+                      child: Ink(
+                        width: 70,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: theme.brightness == Brightness.dark ? const Color(0xFF140f1a) : const Color(0xFF271f30),
+                            width: 3,
+                          ),
+                        ),
+                        child: Icon(
+                          FluentIcons.arrow_sync_20_regular,
+                          color: theme.colorScheme.primary,
+                          size: 30,
+                        ),
                       ),
-                      const Gap(8),
-                      switch (ipInfo) {
+                    ),
+                  ),
+                ),
+
+                // Only show country flag and code instead of full country name
+                Expanded(
+                  child: switch (activeProxy) {
+                    AsyncData() => switch (ipInfo) {
                         AsyncData(value: final info) => Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               IPCountryFlag(countryCode: info.countryCode),
                               const Gap(8),
-                              IPText(
-                                ip: info.ip,
-                                onLongPress: () async {
-                                  ref
-                                      .read(ipInfoNotifierProvider.notifier)
-                                      .refresh();
-                                },
-                              ),
-                            ],
-                          ),
-                        AsyncError(error: final UnknownIp _) => Row(
-                            children: [
-                              const Icon(FluentIcons.arrow_sync_20_regular),
-                              const Gap(8),
-                              UnknownIPText(
-                                text: t.proxies.checkIp,
-                                onTap: () async {
-                                  ref
-                                      .read(ipInfoNotifierProvider.notifier)
-                                      .refresh();
-                                },
-                              ),
-                            ],
-                          ),
-                        AsyncError() => Row(
-                            children: [
-                              const Icon(FluentIcons.error_circle_20_regular),
-                              const Gap(8),
-                              UnknownIPText(
-                                text: t.proxies.unknownIp,
-                                onTap: () async {
-                                  ref
-                                      .read(ipInfoNotifierProvider.notifier)
-                                      .refresh();
-                                },
-                              ),
-                            ],
-                          ),
-                        _ => const Row(
-                            children: [
-                              Icon(FluentIcons.question_circle_20_regular),
-                              Gap(8),
                               Flexible(
-                                child: ShimmerSkeleton(
-                                  height: 16,
-                                  widthFactor: 1,
+                                child: Text(
+                                  // Show country code instead of full country name
+                                  info.countryCode,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
                           ),
+                        AsyncError() => const Center(
+                            child: Text(
+                              "Check Location",
+                              style: TextStyle(
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        _ => const Center(
+                            child: Text(
+                              "Checking...",
+                              style: TextStyle(
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
                       },
-                    ],
-                  ),
+                    _ => const Center(
+                        child: Text(
+                          "Not connected",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                  },
                 ),
-                const _StatsColumn(),
               ],
             ),
           ),
-        _ => const SizedBox(),
-      },
-    );
-  }
-}
-
-class _StatsColumn extends HookConsumerWidget {
-  const _StatsColumn();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final t = ref.watch(translationsProvider);
-    final stats = ref.watch(statsNotifierProvider).value;
-
-    return Directionality(
-      textDirection: TextDirection.values[
-          (Directionality.of(context).index + 1) % TextDirection.values.length],
-      child: Flexible(
-        child: Column(
-          children: [
-            _InfoProp(
-              icon: FluentIcons.arrow_bidirectional_up_down_20_regular,
-              text: (stats?.downlinkTotal ?? 0).size(),
-              semanticLabel: t.stats.totalTransferred,
-            ),
-            const Gap(8),
-            _InfoProp(
-              icon: FluentIcons.arrow_download_20_regular,
-              text: (stats?.downlink ?? 0).speed(),
-              semanticLabel: t.stats.speed,
-            ),
-          ],
         ),
-      ),
-    );
-  }
-}
-
-class _InfoProp extends StatelessWidget {
-  const _InfoProp({
-    required this.icon,
-    required this.text,
-    this.semanticLabel,
-  });
-
-  final IconData icon;
-  final String text;
-  final String? semanticLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      label: semanticLabel,
-      child: Row(
-        children: [
-          Icon(icon),
-          const Gap(8),
-          Flexible(
-            child: Text(
-              text,
-              style: Theme.of(context)
-                  .textTheme
-                  .labelMedium
-                  ?.copyWith(fontFamily: FontFamily.emoji),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
       ),
     );
   }
