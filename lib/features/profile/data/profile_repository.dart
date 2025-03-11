@@ -18,8 +18,11 @@ import 'package:hiddify/features/profile/model/profile_sort_enum.dart';
 import 'package:hiddify/singbox/service/singbox_service.dart';
 import 'package:hiddify/utils/custom_loggers.dart';
 import 'package:hiddify/utils/link_parsers.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:meta/meta.dart';
 import 'package:uuid/uuid.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:hiddify/features/profile/notifier/domain_registry_service.dart';
 
 abstract interface class ProfileRepository {
   TaskEither<ProfileFailure, Unit> init();
@@ -74,6 +77,7 @@ class ProfileRepositoryImpl with ExceptionHandler, InfraLogger implements Profil
     required this.singbox,
     required this.configOptionRepository,
     required this.httpClient,
+    required this.ref,
   });
 
   final ProfileDataSource profileDataSource;
@@ -81,6 +85,40 @@ class ProfileRepositoryImpl with ExceptionHandler, InfraLogger implements Profil
   final SingboxService singbox;
   final ConfigOptionRepository configOptionRepository;
   final DioHttpClient httpClient;
+  final Ref ref;
+
+  String _substituteWithWorkingDomain(String originalUrl, Map<String, String> domainRegistry) {
+    try {
+      final uri = Uri.parse(originalUrl);
+      final host = uri.host;
+      final domainParts = host.split('.');
+
+      if (domainParts.length < 2) return originalUrl;
+
+      final subdomain = domainParts.first;
+
+      // Determine domain type (basic or gold)
+      String domainType;
+      if (subdomain.startsWith('server')) {
+        domainType = 'basic';
+      } else if (subdomain == 'profile') {
+        domainType = 'gold';
+      } else {
+        return originalUrl; // Unknown subdomain format
+      }
+
+      final workingDomain = domainRegistry[domainType];
+      if (workingDomain == null || workingDomain.isEmpty) {
+        return originalUrl; // No working domain available
+      }
+
+      // Rebuild the URI with the working domain but keep the subdomain
+      return uri.replace(host: '$subdomain.$workingDomain').toString();
+    } catch (e) {
+      loggy.error('Error substituting domain', e);
+      return originalUrl; // Return original URL if any error occurs
+    }
+  }
 
   @override
   TaskEither<ProfileFailure, Unit> init() {
@@ -398,17 +436,25 @@ class ProfileRepositoryImpl with ExceptionHandler, InfraLogger implements Profil
         try {
           final configs = await configOptionRepository.getConfigOptions();
 
+          // Get the latest working domains
+          final domainRegistry = await ref.read(domainRegistryServiceProvider.future);
+
+          // Apply domain substitution
+          final substituteUrl = _substituteWithWorkingDomain(url, domainRegistry);
+          loggy.debug("Original URL: [$url], Substituted URL: [$substituteUrl]");
+
           final response = await httpClient.download(
-            url.trim(),
+            substituteUrl.trim(), // Use the substituted URL
             tempFile.path,
             cancelToken: cancelToken,
             userAgent: configs.useXrayCoreWhenPossible ? "v2rayNG/1.8.23" : null,
           );
+
           final headers = await _populateHeaders(response.headers.map, tempFile.path);
           return await validateConfig(file.path, tempFile.path, false)
               .andThen(
                 () => TaskEither(() async {
-                  final profile = ProfileParser.parse(url, headers);
+                  final profile = ProfileParser.parse(url, headers); // Keep original URL in database
                   return right(profile);
                 }),
               )

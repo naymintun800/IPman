@@ -98,6 +98,7 @@ dependencies:
   grpc: ^3.2.4
   dynamic_color: ^1.7.0
   flutter_typeahead: ^5.0.1
+  flutter_dotenv: ^5.2.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -123,6 +124,7 @@ flutter:
   assets:
     # - assets/core/geoip.db
     # - assets/core/geosite.db
+    - .env
     - assets/images/logo.svg
     - assets/images/tray_icon.ico
     - assets/images/tray_icon.png

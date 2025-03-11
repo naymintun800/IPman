@@ -19,6 +19,7 @@ Future<ProfileRepository> profileRepository(ProfileRepositoryRef ref) async {
     singbox: ref.watch(singboxServiceProvider),
     configOptionRepository: ref.watch(configOptionRepositoryProvider),
     httpClient: ref.watch(httpClientProvider),
+    ref: ref, // Pass the ref
   );
   await repo.init().getOrElse((l) => throw l).run();
   return repo;

@@ -21,6 +21,7 @@ import 'package:hiddify/features/profile/notifier/active_profile_notifier.dart';
 import 'package:hiddify/utils/riverpod_utils.dart';
 import 'package:hiddify/utils/utils.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:hiddify/features/profile/notifier/domain_registry_service.dart';
 
 part 'profile_notifier.g.dart';
 
@@ -61,6 +62,9 @@ class AddProfile extends _$AddProfile with AppLogger {
     if (state.isLoading) return;
     state = const AsyncLoading();
     // await check4Warp(rawInput);
+    // Refresh domains from NocoDB before adding
+    await ref.read(domainRegistryServiceProvider.notifier).refreshDomains();
+
     state = await AsyncValue.guard(
       () async {
         final activeProfile = await ref.read(activeProfileProvider.future);
@@ -175,9 +179,14 @@ class UpdateProfile extends _$UpdateProfile with AppLogger {
 
   ProfileRepository get _profilesRepo => ref.read(profileRepositoryProvider).requireValue;
 
+  // Inside the UpdateProfile class's updateProfile method:
   Future<void> updateProfile(RemoteProfileEntity profile) async {
     if (state.isLoading) return;
     state = const AsyncLoading();
+
+    // Refresh domains from NocoDB before updating
+    await ref.read(domainRegistryServiceProvider.notifier).refreshDomains();
+
     await ref.read(hapticServiceProvider.notifier).lightImpact();
     state = await AsyncValue.guard(
       () async {

@@ -6,14 +6,12 @@ import 'package:hiddify/core/app_info/app_info_provider.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/model/failures.dart';
 import 'package:hiddify/core/router/router.dart';
-import 'package:hiddify/core/theme/theme_extensions.dart';
 import 'package:hiddify/features/common/nested_app_bar.dart';
 import 'package:hiddify/features/home/widget/connection_button.dart';
 import 'package:hiddify/features/home/widget/empty_profiles_home_body.dart';
+import 'package:hiddify/features/profile/model/profile_entity.dart';
 import 'package:hiddify/features/profile/notifier/active_profile_notifier.dart';
 import 'package:hiddify/features/profile/notifier/profile_notifier.dart';
-import 'package:hiddify/features/profile/widget/profile_tile.dart';
-import 'package:hiddify/features/profile/model/profile_entity.dart';
 import 'package:hiddify/features/proxy/active/active_proxy_delay_indicator.dart';
 import 'package:hiddify/features/proxy/active/active_proxy_footer.dart';
 import 'package:hiddify/utils/utils.dart';
@@ -67,7 +65,6 @@ class HomePage extends HookConsumerWidget {
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           const SizedBox(height: 40),
 
@@ -78,7 +75,7 @@ class HomePage extends HookConsumerWidget {
                                 ref.read(updateProfileProvider(profile.id).notifier).updateProfile(profile as RemoteProfileEntity);
                               }
                             },
-                            child: Container(
+                            child: SizedBox(
                               width: 160,
                               height: 160,
                               child: Center(
@@ -146,7 +143,7 @@ class HomePage extends HookConsumerWidget {
                               padding: const EdgeInsets.symmetric(horizontal: 12),
                               child: Builder(
                                 builder: (context) {
-                                  final subInfo = (profile as RemoteProfileEntity).subInfo;
+                                  final subInfo = profile.subInfo;
                                   final ratio = subInfo?.ratio ?? 0.0;
 
                                   // Add padding around the outer container

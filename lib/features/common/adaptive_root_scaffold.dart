@@ -9,7 +9,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 abstract interface class RootScaffold {
   static final stateKey = GlobalKey<ScaffoldState>();
 
-  // Always return true to enable drawer on all screen sizes
   static bool canShowDrawer(BuildContext context) => true;
 }
 
@@ -24,7 +23,6 @@ class AdaptiveRootScaffold extends HookConsumerWidget {
 
     final selectedIndex = getCurrentIndex(context);
 
-    // Removed Logs and About items from the destinations array
     final destinations = [
       NavigationDestination(
         icon: const Icon(FluentIcons.power_20_filled),
@@ -32,7 +30,7 @@ class AdaptiveRootScaffold extends HookConsumerWidget {
       ),
       NavigationDestination(
         icon: const Icon(FluentIcons.filter_20_filled),
-        label: t.proxies.pageTitle,
+        label: t.profile.overviewPageTitle, // "Profiles" label
       ),
       NavigationDestination(
         icon: const Icon(FluentIcons.box_edit_20_filled),
