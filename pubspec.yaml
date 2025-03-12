@@ -24,6 +24,10 @@ dependencies:
   # re_highlight: ^0.0.3
   # json_editor_flutter: ^1.4.2
 
+  device_info_plus: ^9.0.2
+  flutter_secure_storage: ^8.0.0
+  crypto: ^3.0.3
+
   slang: ^3.30.1
   slang_flutter: ^3.30.0
   fpdart: ^1.1.0
