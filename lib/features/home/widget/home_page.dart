@@ -16,6 +16,7 @@ import 'package:hiddify/features/proxy/active/active_proxy_delay_indicator.dart'
 import 'package:hiddify/features/proxy/active/active_proxy_footer.dart';
 import 'package:hiddify/utils/utils.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 //import 'package:sliver_tools/sliver_tools.dart';
 
 class HomePage extends HookConsumerWidget {
@@ -35,7 +36,7 @@ class HomePage extends HookConsumerWidget {
           CustomScrollView(
             slivers: [
               NestedAppBar(
-                title: Text.rich(
+                /*title: Text.rich(
                   TextSpan(
                     children: [
                       TextSpan(text: t.general.appTitle),
@@ -46,12 +47,68 @@ class HomePage extends HookConsumerWidget {
                       ),
                     ],
                   ),
-                ),
+                ),*/
                 actions: [
-                  IconButton(
-                    onPressed: () => const QuickSettingsRoute().push(context),
-                    icon: const Icon(FluentIcons.options_24_filled),
-                    tooltip: t.config.quickSettings,
+                  // Inside the NestedAppBar actions array, replace the QuickSettings button with:
+
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final activeProfileAsync = ref.watch(activeProfileProvider);
+
+                      // Determine if button should be enabled
+                      final bool isEnabled = activeProfileAsync.maybeWhen(
+                        data: (profile) => profile is RemoteProfileEntity,
+                        orElse: () => false,
+                      );
+
+                      return IconButton(
+                        onPressed: isEnabled
+                            ? () async {
+                                // Get active profile
+                                final activeProfile = await ref.read(activeProfileProvider.future);
+
+                                if (activeProfile is RemoteProfileEntity) {
+                                  final profileUrl = activeProfile.url;
+
+                                  // Check what type of profile link it is
+                                  final uri = Uri.parse(profileUrl);
+                                  final host = uri.host;
+                                  final domainParts = host.split('.');
+
+                                  if (domainParts.isEmpty) {
+                                    // Invalid domain format, do nothing
+                                    return;
+                                  }
+
+                                  final subdomain = domainParts.first;
+
+                                  // Handle based on subdomain type
+                                  if (subdomain == 'profile') {
+                                    // Gold profile - open directly
+                                    await launchUrl(Uri.parse(profileUrl));
+                                  } else if (subdomain.startsWith('server')) {
+                                    // Basic profile - open with trigger URL
+                                    final triggerUrl = 'https://ipman.intarnad.com/trigger/?link=${Uri.encodeComponent(profileUrl)}';
+                                    await launchUrl(Uri.parse(triggerUrl));
+                                  } else {
+                                    // Not a recognized format
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Not a sharable subscription link')),
+                                    );
+                                  }
+                                }
+                              }
+                            : null, // Setting to null makes the button disabled
+                        icon: Icon(
+                          FluentIcons.person_24_filled,
+                          // Apply reduced opacity when disabled
+                          color: isEnabled
+                              ? null // Use default color when enabled
+                              : theme.iconTheme.color?.withOpacity(0.5), // 50% opacity when disabled
+                        ),
+                        tooltip: "VPN Profile",
+                      );
+                    },
                   ),
                   IconButton(
                     onPressed: () => const AddProfileRoute().push(context),

@@ -143,9 +143,14 @@ flutter:
     - assets/images/ipmanLogo.svg
 
   fonts:
-    - family: Shabnam
+    - family: Z11-MyanSans
       fonts:
-        - asset: assets/fonts/Shabnam.ttf
+        - asset: assets/fonts/Z11-MyanSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Z11-MyanSans-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Z11-MyanSans-Thin.ttf
+          weight: 100
     # - family: Roboto
     #   fonts:
     #     - asset: assets/fonts/Roboto.ttf

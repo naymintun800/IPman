@@ -8,6 +8,7 @@ import 'package:hiddify/features/proxy/active/active_proxy_notifier.dart';
 import 'package:hiddify/features/proxy/active/ip_widget.dart';
 //import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:hiddify/core/localization/translations.dart';
 
 class ActiveProxyFooter extends HookConsumerWidget {
   const ActiveProxyFooter({super.key});
@@ -97,23 +98,23 @@ class ActiveProxyFooter extends HookConsumerWidget {
                                 ),
                               ],
                             ),
-                          AsyncError() => const Center(
+                          AsyncError() => Center(
                               child: Text(
-                                "Check Location",
-                                style: TextStyle(fontSize: 14),
+                                t.proxyFooter.check,
+                                style: const TextStyle(fontSize: 14),
                               ),
                             ),
-                          _ => const Center(
+                          _ => Center(
                               child: Text(
-                                "Checking...",
-                                style: TextStyle(fontSize: 14),
+                                t.proxyFooter.checking,
+                                style: const TextStyle(fontSize: 14),
                               ),
                             ),
                         },
-                      _ => const Center(
+                      _ => Center(
                           child: Text(
-                            "Not connected",
-                            style: TextStyle(
+                            t.proxyFooter.notConnected,
+                            style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                             ),

@@ -1,4 +1,9 @@
 {
+  "proxyFooter": {
+    "check": "Check Location",
+    "checking": "Checking...",
+    "notConnected": "Not Connected"
+  },
   "general": {
     "appTitle": "Hiddify",
     "reset": "Reset",
