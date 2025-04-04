@@ -1,13 +1,13 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:crypto/crypto.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hiddify/utils/custom_loggers.dart';
-import 'package:hiddify/features/profile/notifier/profile_notifier.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:crypto/crypto.dart';
-import 'dart:convert';
-import 'dart:io';
 
 part 'free_trial_service.g.dart';
 
@@ -50,6 +50,12 @@ class FreeTrialService extends _$FreeTrialService with InfraLogger {
 
   Future<String> claimFreeTrial() async {
     try {
+      // Check if this is an emulator
+      final isDeviceEmulator = await isEmulator();
+      if (isDeviceEmulator) {
+        loggy.info('Emulator detected - using special handling for testing');
+      }
+
       // Get or generate device fingerprint
       final deviceId = await _getOrCreateDeviceId();
 
@@ -71,11 +77,18 @@ class FreeTrialService extends _$FreeTrialService with InfraLogger {
         return existingClaim;
       }
 
+      // We're not limiting by IP address anymore to avoid blocking legitimate users behind shared IPs
+      // Instead, we rely on our enhanced device fingerprinting for abuse prevention
+      // We still collect IP for analytics in _saveClaimToNocoDB
+
+      // For emulators, add a special note to the device ID to track testing claims
+      final effectiveDeviceId = isDeviceEmulator ? "$deviceId-EMULATOR-TEST" : deviceId;
+
       // Create new 1GB profile
-      final subscriptionUrl = await _createFreeTrialProfile(deviceId);
+      final subscriptionUrl = await _createFreeTrialProfile(effectiveDeviceId);
 
       // Save to NocoDB
-      await _saveClaimToNocoDB(deviceId, subscriptionUrl);
+      await _saveClaimToNocoDB(effectiveDeviceId, subscriptionUrl);
 
       // Update local storage
       await _secureStorage.write(key: _hasClaimedKey, value: 'true');
@@ -89,12 +102,17 @@ class FreeTrialService extends _$FreeTrialService with InfraLogger {
     }
   }
 
+  // Note: We've removed IP-based rate limiting to avoid blocking legitimate users
+  // who might share the same IP address (e.g., through VPNs, NAT networks, etc.)
+  // We still collect IP addresses for analytics purposes in _saveClaimToNocoDB
+  // This comment is selected by the user in the code editor
+
   Future<String?> _checkExistingClaim(String deviceId) async {
     try {
       final dio = Dio();
       dio.options.headers['xc-token'] = _apiKey;
 
-      // Query NocoDB for this device ID
+      // First, try to find by exact device ID
       final response = await dio.get(
         '$_apiUrl/api/v2/tables/$_tableId/records',
         queryParameters: {
@@ -110,13 +128,59 @@ class FreeTrialService extends _$FreeTrialService with InfraLogger {
       final data = response.data as Map<String, dynamic>;
       final list = data['list'] as List?;
 
-      if (list == null || list.isEmpty) {
-        return null; // No existing claim
+      if (list != null && list.isNotEmpty) {
+        // Found by exact device ID
+        final record = list[0] as Map<String, dynamic>;
+        return record['subscription_url'] as String?;
       }
 
-      // Return the subscription URL from the existing claim
-      final record = list[0] as Map<String, dynamic>;
-      return record['subscription_url'] as String?;
+      // If not found by device ID, try to find by device info
+      final deviceInfo = await _collectDeviceInfo();
+
+      // Check for Android devices using more reliable identifiers
+      if (Platform.isAndroid) {
+        // Try to match by fingerprint, model, and manufacturer
+        final fingerprint = deviceInfo['fingerprint'];
+        final model = deviceInfo['model'];
+        final manufacturer = deviceInfo['manufacturer'];
+
+        if (fingerprint != null && model != null && manufacturer != null) {
+          // Search for records with similar device info
+          final secondResponse = await dio.get(
+            '$_apiUrl/api/v2/tables/$_tableId/records',
+          );
+
+          if (secondResponse.statusCode == 200) {
+            final allData = secondResponse.data as Map<String, dynamic>;
+            final allRecords = allData['list'] as List?;
+
+            if (allRecords != null) {
+              // Look for matching device info in all records
+              for (final record in allRecords) {
+                final recordMap = record as Map<String, dynamic>;
+                final deviceInfoStr = recordMap['device_info'] as String?;
+
+                if (deviceInfoStr != null) {
+                  try {
+                    final recordDeviceInfo = json.decode(deviceInfoStr) as Map<String, dynamic>;
+
+                    // Check if critical hardware identifiers match
+                    if (recordDeviceInfo['fingerprint'] == fingerprint && recordDeviceInfo['model'] == model && recordDeviceInfo['manufacturer'] == manufacturer) {
+                      loggy.info('Found matching device by hardware identifiers');
+                      return recordMap['subscription_url'] as String?;
+                    }
+                  } catch (e) {
+                    // Continue to next record if parsing fails
+                    continue;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      return null; // No existing claim found
     } catch (e) {
       loggy.error('Error checking existing claim', e);
       return null; // Assume no claim if error
@@ -209,11 +273,42 @@ class FreeTrialService extends _$FreeTrialService with InfraLogger {
     // Get device info
     final deviceInfo = await _collectDeviceInfo();
 
-    // Add a salt to make it harder to spoof
-    deviceInfo['salt'] = 'ipman-app-fingerprint-$_apiKey';
+    // Create a more stable fingerprint by only using hardware identifiers
+    // that don't change between installations
+    final stableIdentifiers = <String, dynamic>{};
 
-    // Generate a hash from the collected data
-    final dataStr = json.encode(deviceInfo);
+    if (Platform.isAndroid) {
+      // Use the most stable identifiers for Android
+      if (deviceInfo['fingerprint'] != null) stableIdentifiers['fingerprint'] = deviceInfo['fingerprint'];
+      if (deviceInfo['model'] != null) stableIdentifiers['model'] = deviceInfo['model'];
+      if (deviceInfo['manufacturer'] != null) stableIdentifiers['manufacturer'] = deviceInfo['manufacturer'];
+      if (deviceInfo['brand'] != null) stableIdentifiers['brand'] = deviceInfo['brand'];
+      if (deviceInfo['device'] != null) stableIdentifiers['device'] = deviceInfo['device'];
+      if (deviceInfo['product'] != null) stableIdentifiers['product'] = deviceInfo['product'];
+      if (deviceInfo['hardware'] != null) stableIdentifiers['hardware'] = deviceInfo['hardware'];
+
+      // Add a flag to indicate if this is an emulator
+      stableIdentifiers['isEmulator'] = !(deviceInfo['isPhysicalDevice'] as bool? ?? true);
+    } else if (Platform.isIOS) {
+      // Use stable identifiers for iOS
+      if (deviceInfo['model'] != null) stableIdentifiers['model'] = deviceInfo['model'];
+      if (deviceInfo['systemName'] != null) stableIdentifiers['systemName'] = deviceInfo['systemName'];
+      if (deviceInfo['utsname'] != null) stableIdentifiers['utsname'] = deviceInfo['utsname'];
+      if (deviceInfo['isPhysicalDevice'] != null) stableIdentifiers['isPhysicalDevice'] = deviceInfo['isPhysicalDevice'];
+    } else {
+      // For other platforms, use what we have
+      stableIdentifiers.addAll(deviceInfo);
+    }
+
+    // Add a salt to make it harder to spoof
+    stableIdentifiers['salt'] = 'ipman-app-fingerprint-$_apiKey';
+
+    // Add a version number to the fingerprinting method
+    // This allows you to update the algorithm in the future if needed
+    stableIdentifiers['version'] = 'v1.1';
+
+    // Generate a hash from the stable data
+    final dataStr = json.encode(stableIdentifiers);
     final bytes = utf8.encode(dataStr);
     final digest = sha256.convert(bytes);
 
@@ -227,30 +322,64 @@ class FreeTrialService extends _$FreeTrialService with InfraLogger {
     try {
       if (Platform.isAndroid) {
         final info = await deviceInfo.androidInfo;
+        // Collect more identifiers for better fingerprinting
         data['id'] = info.id;
         data['brand'] = info.brand;
         data['model'] = info.model;
         data['fingerprint'] = info.fingerprint;
+        data['board'] = info.board;
+        data['bootloader'] = info.bootloader;
+        data['device'] = info.device;
+        data['display'] = info.display;
+        data['hardware'] = info.hardware;
+        data['host'] = info.host;
+        data['manufacturer'] = info.manufacturer;
+        data['product'] = info.product;
+        data['serialNumber'] = info.serialNumber;
+        data['supportedAbis'] = info.supportedAbis.join(',');
+        data['tags'] = info.tags;
+        data['type'] = info.type;
+        data['isPhysicalDevice'] = info.isPhysicalDevice;
+        // Note: androidId is not directly available in newer versions of device_info_plus
+        // Use a combination of other identifiers instead
+        data['systemFeatures'] = info.systemFeatures.join(',');
       } else if (Platform.isIOS) {
         final info = await deviceInfo.iosInfo;
         data['id'] = info.identifierForVendor;
         data['model'] = info.model;
         data['name'] = info.name;
+        data['systemName'] = info.systemName;
+        data['systemVersion'] = info.systemVersion;
+        data['localizedModel'] = info.localizedModel;
+        data['utsname'] = '${info.utsname.sysname}-${info.utsname.nodename}-${info.utsname.machine}';
+        data['isPhysicalDevice'] = info.isPhysicalDevice;
       } else if (Platform.isWindows) {
         final info = await deviceInfo.windowsInfo;
         data['id'] = info.computerName;
         data['machineId'] = info.deviceId;
+        data['numberOfCores'] = info.numberOfCores;
+        data['systemMemoryInMegabytes'] = info.systemMemoryInMegabytes;
       } else if (Platform.isLinux) {
         final info = await deviceInfo.linuxInfo;
         data['id'] = info.machineId;
+        data['version'] = info.version;
+        data['name'] = info.name;
+        data['buildId'] = info.buildId;
+        data['variant'] = info.variant;
+        data['variantId'] = info.variantId;
       } else if (Platform.isMacOS) {
         final info = await deviceInfo.macOsInfo;
         data['id'] = info.systemGUID;
         data['model'] = info.model;
+        data['kernelVersion'] = info.kernelVersion;
+        data['osRelease'] = info.osRelease;
+        data['activeCPUs'] = info.activeCPUs;
+        data['memorySize'] = info.memorySize;
+        data['cpuFrequency'] = info.cpuFrequency;
       }
 
-      // Add installation timestamp as additional identifier
-      data['installTime'] = DateTime.now().toIso8601String();
+      // Don't include installation timestamp as it changes with each install
+      // Instead, use more hardware-specific identifiers
 
       return data;
     } catch (e) {
@@ -271,7 +400,7 @@ class FreeTrialService extends _$FreeTrialService with InfraLogger {
     }
   }
 
-// For testing only - completely resets both claim status and device ID
+  // For testing only - completely resets both claim status and device ID
   Future<void> resetEverythingForTesting() async {
     // Delete all storage keys
     await _secureStorage.delete(key: _hasClaimedKey);
@@ -283,5 +412,28 @@ class FreeTrialService extends _$FreeTrialService with InfraLogger {
 
     // Log for debugging
     loggy.info('Free trial completely reset for testing');
+  }
+
+  // Check if the current device is likely an emulator
+  Future<bool> isEmulator() async {
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+
+      if (Platform.isAndroid) {
+        final info = await deviceInfo.androidInfo;
+        // Check multiple indicators that suggest an emulator
+        final isEmulator = !info.isPhysicalDevice || info.brand.toLowerCase().contains('google') || info.model.toLowerCase().contains('sdk') || info.fingerprint.toLowerCase().contains('generic') || info.product.toLowerCase().contains('sdk');
+        return isEmulator;
+      } else if (Platform.isIOS) {
+        final info = await deviceInfo.iosInfo;
+        return !info.isPhysicalDevice;
+      }
+
+      // For other platforms, assume not an emulator
+      return false;
+    } catch (e) {
+      // If we can't determine, assume it's not an emulator
+      return false;
+    }
   }
 }

@@ -50,123 +50,235 @@ class ProfileTile extends HookConsumerWidget {
       _ => null,
     };
 
-    final effectiveMargin = isMain ? const EdgeInsets.symmetric(horizontal: 16, vertical: 8) : const EdgeInsets.only(left: 12, right: 12, bottom: 12);
-    final double effectiveElevation = profile.active ? 12 : 4;
-    final effectiveOutlineColor = profile.active ? theme.colorScheme.outlineVariant : Colors.transparent;
+    // Skip customization for main profile as it's already handled in home page
+    if (isMain) {
+      const effectiveMargin = EdgeInsets.symmetric(horizontal: 16, vertical: 8);
+      final effectiveOutlineColor = theme.colorScheme.outlineVariant;
 
-    return Card(
-      margin: effectiveMargin,
-      elevation: effectiveElevation,
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: effectiveOutlineColor),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      clipBehavior: Clip.antiAlias,
-      shadowColor: Colors.transparent,
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (profile is RemoteProfileEntity || !isMain) ...[
-              SizedBox(
-                width: 48,
-                child: Semantics(
-                  sortKey: const OrdinalSortKey(1),
-                  child: ProfileActionButton(profile, !isMain),
-                ),
-              ),
-              VerticalDivider(
-                width: 1,
-                color: effectiveOutlineColor,
-              ),
-            ],
-            Expanded(
-              child: Semantics(
-                button: true,
-                sortKey: isMain ? const OrdinalSortKey(0) : null,
-                focused: isMain,
-                liveRegion: isMain,
-                namesRoute: isMain,
-                label: isMain ? t.profile.activeProfileBtnSemanticLabel : null,
-                child: InkWell(
-                  onTap: () {
-                    if (isMain) {
-                      const ProfilesOverviewRoute().go(context);
-                    } else {
-                      if (selectActiveMutation.state.isInProgress) return;
-                      if (profile.active) return;
-                      selectActiveMutation.setFuture(
-                        ref.read(profilesOverviewNotifierProvider.notifier).selectActiveProfile(profile.id),
-                      );
-                    }
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
+      // Enhanced main profile card with custom shadow
+      return Container(
+        margin: effectiveMargin,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: theme.brightness == Brightness.dark ? const Color(0xFF140f1a) : const Color(0xFF271f30),
+              offset: const Offset(0, 3),
+              spreadRadius: 2,
+              blurRadius: 2,
+            ),
+          ],
+        ),
+        child: Card(
+          margin: EdgeInsets.zero,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            side: BorderSide(color: effectiveOutlineColor),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          clipBehavior: Clip.antiAlias,
+          shadowColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (profile is RemoteProfileEntity) ...[
+                  SizedBox(
+                    width: 48,
+                    child: Semantics(
+                      sortKey: const OrdinalSortKey(1),
+                      child: ProfileActionButton(profile, false),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (isMain)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            child: Material(
-                              borderRadius: BorderRadius.circular(8),
-                              color: Colors.transparent,
-                              clipBehavior: Clip.antiAlias,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      profile.name,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: theme.textTheme.titleMedium?.copyWith(
-                                        fontFamily: FontFamily.emoji,
-                                      ),
-                                      semanticsLabel: t.profile.activeProfileNameSemanticLabel(
-                                        name: profile.name,
+                  ),
+                  VerticalDivider(
+                    width: 1,
+                    color: effectiveOutlineColor,
+                  ),
+                ],
+                Expanded(
+                  child: Semantics(
+                    button: true,
+                    sortKey: const OrdinalSortKey(0),
+                    focused: true,
+                    liveRegion: true,
+                    namesRoute: true,
+                    label: t.profile.activeProfileBtnSemanticLabel,
+                    child: InkWell(
+                      onTap: () => const ProfilesOverviewRoute().go(context),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Material(
+                                borderRadius: BorderRadius.circular(8),
+                                color: Colors.transparent,
+                                clipBehavior: Clip.antiAlias,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        profile.name,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: theme.textTheme.titleMedium?.copyWith(
+                                          fontFamily: FontFamily.emoji,
+                                        ),
+                                        semanticsLabel: t.profile.activeProfileNameSemanticLabel(
+                                          name: profile.name,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  const Icon(
-                                    FluentIcons.caret_down_16_filled,
-                                    size: 16,
-                                  ),
-                                ],
+                                    const Icon(
+                                      FluentIcons.caret_down_16_filled,
+                                      size: 16,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          )
-                        else
-                          Text(
-                            profile.name,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.titleMedium,
-                            semanticsLabel: profile.active
-                                ? t.profile.activeProfileNameSemanticLabel(
-                                    name: profile.name,
-                                  )
-                                : t.profile.nonActiveProfileBtnSemanticLabel(
-                                    name: profile.name,
-                                  ),
-                          ),
-                        if (subInfo != null) ...[
-                          const Gap(4),
-                          RemainingTrafficIndicator(subInfo.ratio),
-                          const Gap(4),
-                          ProfileSubscriptionInfo(subInfo),
-                          const Gap(4),
-                        ],
-                      ],
+                            if (subInfo != null) ...[
+                              const Gap(6),
+                              RemainingTrafficIndicator(subInfo.ratio),
+                              const Gap(6),
+                              // Enhanced data usage display for main profile
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primaryContainer.withOpacity(0.4),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: ProfileSubscriptionInfo(subInfo),
+                              ),
+                              const Gap(6),
+                            ],
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
+        ),
+      );
+    }
+
+    // Custom minimal design for non-main profiles
+    final isActive = profile.active;
+    final cardColor = isActive ? theme.colorScheme.primaryContainer.withOpacity(0.7) : theme.colorScheme.surface;
+    final textColor = isActive ? theme.colorScheme.onPrimaryContainer : theme.colorScheme.onSurface;
+
+    // Use Container with BoxShadow instead of Card for better shadow control
+    return Container(
+      margin: const EdgeInsets.only(left: 12, right: 12, bottom: 16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: theme.brightness == Brightness.dark ? const Color(0xFF140f1a) : const Color(0xFF271f30),
+            offset: const Offset(0, 3),
+            spreadRadius: 2,
+            blurRadius: 2,
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {
+          if (selectActiveMutation.state.isInProgress) return;
+          if (isActive) return;
+          selectActiveMutation.setFuture(
+            ref.read(profilesOverviewNotifierProvider.notifier).selectActiveProfile(profile.id),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: Row(
+            children: [
+              // Action button on the left
+              if (profile is RemoteProfileEntity) ...[
+                Container(
+                  width: 40,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: isActive ? theme.colorScheme.primary.withOpacity(0.3) : theme.colorScheme.primary.withOpacity(0.2),
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(8),
+                      bottomRight: Radius.circular(8),
+                    ),
+                  ),
+                  child: ProfileActionButton(profile, true),
+                ),
+                const SizedBox(width: 8),
+              ],
+              // Profile content
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Profile name
+                      Text(
+                        profile.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: textColor,
+                          fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                      // Traffic indicator if available
+                      if (subInfo != null) ...[
+                        const SizedBox(height: 6),
+                        RemainingTrafficIndicator(subInfo.ratio),
+                        const SizedBox(height: 4),
+                        // Only show data usage, not days remaining
+                        Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: isActive ? theme.colorScheme.primaryContainer.withOpacity(0.4) : theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              subInfo.total > 10 * 1099511627776 //10TB
+                                  ? "∞ GiB"
+                                  : subInfo.consumption.sizeOf(subInfo.total),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: textColor,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0.2,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              // Active indicator
+              if (isActive)
+                Container(
+                  width: 4,
+                  height: 50,
+                  color: theme.colorScheme.primary,
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -297,13 +409,7 @@ class ProfileActionsMenu extends HookConsumerWidget {
           ),
         ],
       ),
-      AdaptiveMenuItem(
-        icon: FluentIcons.edit_24_regular,
-        title: t.profile.edit.buttonTxt,
-        onTap: () async {
-          await ProfileDetailsRoute(profile.id).push(context);
-        },
-      ),
+      // Edit button removed as requested
       AdaptiveMenuItem(
         icon: FluentIcons.delete_24_regular,
         title: t.profile.delete.buttonTxt,
@@ -334,65 +440,37 @@ class ProfileActionsMenu extends HookConsumerWidget {
   }
 }
 
-// TODO add support url
+// Modified to remove days remaining display
 class ProfileSubscriptionInfo extends HookConsumerWidget {
   const ProfileSubscriptionInfo(this.subInfo, {super.key});
 
   final SubscriptionInfo subInfo;
-
-  (String, Color?) remainingText(TranslationsEn t, ThemeData theme) {
-    if (subInfo.isExpired) {
-      return (t.profile.subscription.expired, theme.colorScheme.error);
-    } else if (subInfo.ratio >= 1) {
-      return (t.profile.subscription.noTraffic, theme.colorScheme.error);
-    } else if (subInfo.remaining.inDays > 365) {
-      return (t.profile.subscription.remainingDuration(duration: "∞"), null);
-    } else {
-      return (
-        t.profile.subscription.remainingDuration(duration: subInfo.remaining.inDays),
-        null,
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
     final theme = Theme.of(context);
 
-    final remaining = remainingText(t, theme);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Directionality(
-          textDirection: TextDirection.ltr,
-          child: Flexible(
-            child: Text(
-              subInfo.total > 10 * 1099511627776 //10TB
-                  ? "∞ GiB"
-                  : subInfo.consumption.sizeOf(subInfo.total),
-              semanticsLabel: t.profile.subscription.remainingTrafficSemanticLabel(
-                consumed: subInfo.consumption.sizeGB(),
-                total: subInfo.total.sizeGB(),
-              ),
-              style: theme.textTheme.bodySmall,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
+    // Only show data usage information
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Text(
+        subInfo.total > 10 * 1099511627776 //10TB
+            ? "∞ GiB"
+            : subInfo.consumption.sizeOf(subInfo.total),
+        semanticsLabel: t.profile.subscription.remainingTrafficSemanticLabel(
+          consumed: subInfo.consumption.sizeGB(),
+          total: subInfo.total.sizeGB(),
         ),
-        Flexible(
-          child: Text(
-            remaining.$1,
-            style: theme.textTheme.bodySmall?.copyWith(color: remaining.$2),
-            overflow: TextOverflow.ellipsis,
-          ),
+        style: theme.textTheme.bodySmall?.copyWith(
+          fontWeight: FontWeight.w500,
         ),
-      ],
+        overflow: TextOverflow.ellipsis,
+      ),
     );
   }
 }
 
-// TODO change colors
 class RemainingTrafficIndicator extends StatelessWidget {
   const RemainingTrafficIndicator(this.ratio, {super.key});
 
@@ -400,25 +478,36 @@ class RemainingTrafficIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final startColor = ratio < 0.25
-        ? const Color.fromRGBO(93, 205, 251, 1.0)
-        : ratio < 0.65
-            ? const Color.fromRGBO(205, 199, 64, 1.0)
-            : const Color.fromRGBO(241, 82, 81, 1.0);
-    final endColor = ratio < 0.25
-        ? const Color.fromRGBO(49, 146, 248, 1.0)
-        : ratio < 0.65
-            ? const Color.fromRGBO(98, 115, 32, 1.0)
-            : const Color.fromRGBO(139, 30, 36, 1.0);
+    final theme = Theme.of(context);
 
-    return LinearPercentIndicator(
-      percent: ratio,
-      animation: true,
-      padding: EdgeInsets.zero,
-      lineHeight: 6,
-      barRadius: const Radius.circular(16),
-      linearGradient: LinearGradient(
-        colors: [startColor, endColor],
+    // Use theme colors for a more consistent look
+    final startColor = ratio < 0.25
+        ? theme.colorScheme.primary
+        : ratio < 0.65
+            ? theme.colorScheme.tertiary
+            : theme.colorScheme.error;
+    final endColor = ratio < 0.25
+        ? theme.colorScheme.primary.withOpacity(0.8)
+        : ratio < 0.65
+            ? theme.colorScheme.tertiary.withOpacity(0.8)
+            : theme.colorScheme.error.withOpacity(0.8);
+
+    // Container with custom styling for better appearance
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: LinearPercentIndicator(
+        percent: ratio,
+        animation: true,
+        padding: EdgeInsets.zero,
+        lineHeight: 24, // Increased height as requested
+        barRadius: const Radius.circular(10),
+        backgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF140f1a) : const Color(0xFF271f30),
+        linearGradient: LinearGradient(
+          colors: [startColor, endColor],
+          stops: const [0.3, 1.0],
+        ),
       ),
     );
   }

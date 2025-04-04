@@ -38,8 +38,9 @@ class ActiveProxyFooter extends HookConsumerWidget {
                 boxShadow: [
                   BoxShadow(
                     color: theme.brightness == Brightness.dark ? const Color(0xFF140f1a) : const Color(0xFF271f30),
-                    offset: const Offset(0, 3),
-                    spreadRadius: 4,
+                    blurRadius: 4,
+                    spreadRadius: 0.5,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
@@ -64,7 +65,7 @@ class ActiveProxyFooter extends HookConsumerWidget {
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: theme.brightness == Brightness.dark ? const Color(0xFF140f1a) : const Color(0xFF271f30),
-                              width: 3,
+                              width: 2,
                             ),
                           ),
                           child: Icon(

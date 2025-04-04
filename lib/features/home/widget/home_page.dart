@@ -216,8 +216,9 @@ class HomePage extends HookConsumerWidget {
                                         boxShadow: [
                                           BoxShadow(
                                             color: theme.brightness == Brightness.dark ? const Color(0xFF140f1a) : const Color(0xFF271f30),
-                                            offset: const Offset(0, 3),
-                                            spreadRadius: 4,
+                                            blurRadius: 4,
+                                            spreadRadius: 0.5,
+                                            offset: const Offset(0, 2),
                                           ),
                                         ],
                                       ),

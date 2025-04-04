@@ -1,9 +1,12 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:gap/gap.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/router/router.dart';
 import 'package:hiddify/features/profile/add/free_trial_service.dart';
+import 'package:hiddify/features/profile/notifier/profile_notifier.dart';
+import 'package:hiddify/utils/alerts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class EmptyProfilesHomeBody extends HookConsumerWidget {
@@ -12,6 +15,60 @@ class EmptyProfilesHomeBody extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
+    final isClaimingFreeTrial = useState(false);
+
+    Future<void> claimFreeTrial() async {
+      if (isClaimingFreeTrial.value) return;
+
+      try {
+        isClaimingFreeTrial.value = true;
+
+        // Check if free trial has been claimed before
+        final hasClaimed = await ref.read(freeTrialServiceProvider.future);
+
+        if (hasClaimed) {
+          // If already claimed, try to get the stored URL
+          final storedUrl = await ref.read(freeTrialServiceProvider.notifier).getStoredSubscriptionUrl();
+
+          if (storedUrl != null && storedUrl.isNotEmpty) {
+            // Add the profile using the stored URL
+            await ref.read(addProfileProvider.notifier).add(storedUrl);
+            if (context.mounted) {
+              const CustomToast.success("Your free 1GB trial profile has been added again.").show(context);
+            }
+            return;
+          }
+        }
+
+        // Show a message that we're setting up the free trial
+        if (context.mounted) {
+          const CustomToast.success("Setting up your free 1GB trial...").show(context);
+        }
+
+        // Create a free trial profile
+        final subscriptionUrl = await ref.read(freeTrialServiceProvider.notifier).claimFreeTrial();
+
+        // Add the profile
+        await ref.read(addProfileProvider.notifier).add(subscriptionUrl);
+
+        // Show success message
+        if (context.mounted) {
+          const CustomToast.success("Your free 1GB trial has been activated!").show(context);
+        }
+      } catch (e) {
+        // Handle specific error messages from the free trial service
+        if (context.mounted) {
+          if (e is FreeTrialFailure) {
+            CustomToast.error(e.toString()).show(context);
+          } else {
+            const CustomToast.error("Could not activate free trial. Please try again later.").show(context);
+          }
+        }
+        debugPrint("Error claiming free trial: $e");
+      } finally {
+        isClaimingFreeTrial.value = false;
+      }
+    }
 
     return SliverFillRemaining(
       hasScrollBody: false,
@@ -19,7 +76,20 @@ class EmptyProfilesHomeBody extends HookConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(t.home.emptyProfilesMsg),
+          const Gap(24),
+          // Free 1GB Trial Button
+          ElevatedButton.icon(
+            onPressed: isClaimingFreeTrial.value ? null : claimFreeTrial,
+            icon: isClaimingFreeTrial.value ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(FluentIcons.gift_24_regular),
+            label: const Text("Get Free 1GB Trial"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+          ),
           const Gap(16),
+          // Regular Add Profile Button
           OutlinedButton.icon(
             onPressed: () => const AddProfileRoute().push(context),
             icon: const Icon(FluentIcons.add_24_regular),

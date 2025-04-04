@@ -18,6 +18,7 @@ class ConnectionButton extends HookConsumerWidget {
     final isConnected = connectionStatus.valueOrNull is Connected;
     final isReconnectNeeded = ref.watch(configOptionNotifierProvider).valueOrNull == true;
     final isLoading = connectionStatus is AsyncLoading;
+    final theme = Theme.of(context);
 
     // Get theme extension
     final buttonTheme = Theme.of(context).extension<ConnectionButtonTheme>();
@@ -45,12 +46,13 @@ class ConnectionButton extends HookConsumerWidget {
     final toggleWidth = screenWidth < 600 ? screenWidth * 0.45 : 240.0;
 
     // Button height - modify this multiplier (0.45) to make button taller or shorter
-    // Higher values = taller button, Lower values = shorter button
-    final toggleHeight = toggleWidth * 0.45; // Increased from 0.4 to 0.45 for taller button
+    final toggleHeight = toggleWidth * 0.45;
 
-    // Knob size - adjust the subtraction value for margin between knob and button edge
-    // Lower values = larger knob, Higher values = smaller knob
-    final knobSize = toggleHeight - 6;
+    // Border width - used for calculations
+    const borderWidth = 5.0;
+
+    // Knob size - slightly smaller than the button height to account for border
+    final knobSize = toggleHeight - (borderWidth * 4);
     // =====================================
 
     return Column(
@@ -67,7 +69,19 @@ class ConnectionButton extends HookConsumerWidget {
             height: toggleHeight,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(toggleHeight / 2),
-              color: currentColor,
+              color: currentColor, // Dynamic color based on connection state
+              border: Border.all(
+                color: Theme.of(context).colorScheme.surface,
+                width: 5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: theme.brightness == Brightness.dark ? const Color(0xFF140f1a) : const Color(0xFF271f30),
+                  offset: const Offset(0, 2),
+                  spreadRadius: 1,
+                  blurRadius: 4,
+                ),
+              ],
             ),
             child: Stack(
               children: [
@@ -75,14 +89,28 @@ class ConnectionButton extends HookConsumerWidget {
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
-                  left: isConnected ? toggleWidth - knobSize - 3 : 3,
-                  top: (toggleHeight - knobSize) / 2, // Center vertically
+                  // Position the knob at the edge when disconnected, at the right edge when connected
+                  // Account for the border width
+                  left: isConnected ? toggleWidth - knobSize - (borderWidth * 3) : borderWidth,
+                  top: ((toggleHeight - knobSize) / 2) - borderWidth, // Account for the top border
                   child: Container(
                     width: knobSize,
                     height: knobSize,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white,
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 0.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: theme.brightness == Brightness.dark ? const Color(0xFF140f1a) : const Color(0xFF271f30),
+                          blurRadius: 4,
+                          spreadRadius: 0.5,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Center(
                       child: isLoading
@@ -95,7 +123,7 @@ class ConnectionButton extends HookConsumerWidget {
                               ),
                             )
                           : Icon(
-                              isConnected ? Icons.check : Icons.close,
+                              Icons.close,
                               color: currentColor,
                               size: knobSize * 0.5,
                             ),

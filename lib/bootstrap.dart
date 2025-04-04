@@ -27,7 +27,6 @@ import 'package:hiddify/singbox/service/singbox_service_provider.dart';
 import 'package:hiddify/utils/utils.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
-import 'package:hiddify/features/profile/add/free_trial_initializer.dart';
 
 Future<void> lazyBootstrap(
   WidgetsBinding widgetsBinding,
@@ -153,11 +152,8 @@ Future<void> lazyBootstrap(
   Logger.bootstrap.info("bootstrap took [${stopWatch.elapsedMilliseconds}ms]");
   stopWatch.stop();
 
-  await _safeInit(
-    "free trial service",
-    () => container.read(freeTrialInitializerProvider.future),
-    timeout: 5000, // Increased timeout for API calls
-  );
+  // Free trial is now initiated by user action instead of automatically
+  // See EmptyProfilesHomeBody for the implementation
 
   Logger.bootstrap.info("bootstrap took [${stopWatch.elapsedMilliseconds}ms]");
   stopWatch.stop();
