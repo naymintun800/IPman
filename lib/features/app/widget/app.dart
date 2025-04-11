@@ -12,6 +12,7 @@ import 'package:hiddify/core/theme/app_theme.dart';
 import 'package:hiddify/core/theme/theme_preferences.dart';
 import 'package:hiddify/features/app_update/notifier/app_update_notifier.dart';
 import 'package:hiddify/features/connection/widget/connection_wrapper.dart';
+import 'package:hiddify/features/profile/add/free_trial_usage_checker.dart';
 import 'package:hiddify/features/profile/notifier/profiles_update_notifier.dart';
 import 'package:hiddify/features/shortcut/shortcut_wrapper.dart';
 import 'package:hiddify/features/system_tray/widget/system_tray_wrapper.dart';
@@ -35,6 +36,9 @@ class App extends HookConsumerWidget with PresLogger {
     final upgrader = ref.watch(upgraderProvider);
 
     ref.listen(foregroundProfilesUpdateNotifierProvider, (_, __) {});
+
+    // Initialize free trial usage checker
+    ref.watch(freeTrialUsageCheckerProvider);
 
     return WindowWrapper(
       TrayWrapper(

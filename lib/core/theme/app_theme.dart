@@ -83,7 +83,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
-      scaffoldBackgroundColor: mode.trueBlack ? Colors.black : scheme.surface,
+      scaffoldBackgroundColor: scheme.surface,
       fontFamily: fontFamily,
       // Customize text theme for more vibrant text in dark mode
       textTheme: TextTheme(

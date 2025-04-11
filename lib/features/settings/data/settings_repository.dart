@@ -9,9 +9,7 @@ abstract interface class SettingsRepository {
   TaskEither<SettingsFailure, bool> requestIgnoreBatteryOptimizations();
 }
 
-class SettingsRepositoryImpl
-    with ExceptionHandler, InfraLogger
-    implements SettingsRepository {
+class SettingsRepositoryImpl with ExceptionHandler, InfraLogger implements SettingsRepository {
   final _methodChannel = const MethodChannel("com.hiddify.app/platform");
 
   @override
@@ -19,8 +17,7 @@ class SettingsRepositoryImpl
     return exceptionHandler(
       () async {
         loggy.debug("checking battery optimization status");
-        final result = await _methodChannel
-            .invokeMethod<bool>("is_ignoring_battery_optimizations");
+        final result = await _methodChannel.invokeMethod<bool>("is_ignoring_battery_optimizations");
         loggy.debug("is ignoring battery optimizations? [$result]");
         return right(result!);
       },
@@ -33,8 +30,7 @@ class SettingsRepositoryImpl
     return exceptionHandler(
       () async {
         loggy.debug("requesting ignore battery optimization");
-        final result = await _methodChannel
-            .invokeMethod<bool>("request_ignore_battery_optimizations");
+        final result = await _methodChannel.invokeMethod<bool>("request_ignore_battery_optimizations");
         loggy.debug("ignore battery optimization result: [$result]");
         return right(result!);
       },

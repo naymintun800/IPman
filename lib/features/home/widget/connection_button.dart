@@ -123,7 +123,7 @@ class ConnectionButton extends HookConsumerWidget {
                               ),
                             )
                           : Icon(
-                              Icons.close,
+                              Icons.settings_power_rounded,
                               color: currentColor,
                               size: knobSize * 0.5,
                             ),

@@ -118,6 +118,7 @@ dev_dependencies:
   go_router_builder: ^2.4.1
   dependency_validator: ^3.2.3
   dart_mappable_builder: ^4.2.1
+  flutter_launcher_icons: "^0.14.3"
 
 dependency_overrides:
   # drift & package_info_plus are not compatible
@@ -164,12 +165,27 @@ flutter_gen:
     flutter_svg: true
 
 flutter_native_splash:
-  color: "#ffffff"
-  image: assets/images/source/ic_launcher_splash.png
+  color: "#e3e3fb"
+  image: assets/images/ipmanSplash.png
   android_gravity: center
   android_12:
-    color: "#ffffff"
-    image: assets/images/source/ic_launcher_foreground.png
+    color: "#e3e3fb"
+    image: assets/images/ipman12plash.png
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/ipicon.png"
+  adaptive_icon_background: "#E3E3FB"
+  adaptive_icon_foreground: "assets/images/ipicon_foreground.png"
+  web:
+    generate: false
+  windows:
+    generate: true
+    image_path: "assets/images/ipicon.png"
+  macos:
+    generate: true
+    image_path: "assets/images/ipicon.png"
 
 ffigen:
   name: "SingboxNativeLibrary"

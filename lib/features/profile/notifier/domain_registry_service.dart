@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-
+import 'package:fpdart/fpdart.dart';
 import 'package:hiddify/utils/custom_loggers.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -32,7 +32,6 @@ class DomainRegistryService extends _$DomainRegistryService with InfraLogger {
       return {
         'basic': '',
         'gold': '',
-        'free': '',
       };
     }
   }
@@ -56,23 +55,22 @@ class DomainRegistryService extends _$DomainRegistryService with InfraLogger {
     // Type-safe check for list existence and emptiness
     final list = responseData['list'];
     if (list == null) {
-      throw const DomainRegistryFailure('No list found in response');
+      throw DomainRegistryFailure('No list found in response');
     }
 
     if (list is! List || list.isEmpty) {
-      throw const DomainRegistryFailure('No domain records found');
+      throw DomainRegistryFailure('No domain records found');
     }
 
     final record = list[0] as Map<String, dynamic>?;
     if (record == null) {
-      throw const DomainRegistryFailure('Empty domain record');
+      throw DomainRegistryFailure('Empty domain record');
     }
 
     // Extract domains from the first record
     return {
       'basic': record['basic']?.toString() ?? '',
       'gold': record['gold']?.toString() ?? '',
-      'free': record['free']?.toString() ?? '',
     };
   }
 

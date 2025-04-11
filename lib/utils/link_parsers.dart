@@ -20,12 +20,12 @@ abstract class LinkParser {
       query: uri.query,
       fragment: name ?? uri.fragment,
     );
-    // return 'hiddify://import/$modifiedUri';
+    // return 'ipman://import/$modifiedUri';
     return '$modifiedUri';
   }
 
   // protocols schemas
-  static const protocols = {'clash', 'clashmeta', 'sing-box', 'hiddify'};
+  static const protocols = {'clash', 'clashmeta', 'sing-box', 'ipman'};
 
   static ProfileLink? parse(String link) {
     return simple(link) ?? deep(link);
@@ -84,7 +84,7 @@ abstract class LinkParser {
       case 'sing-box':
         if (uri.authority != 'import-remote-profile' || !queryParams.containsKey('url')) return null;
         return (url: queryParams['url']!, name: queryParams['name'] ?? '');
-      case 'hiddify':
+      case 'ipman':
         if (uri.authority == "import") {
           return (url: uri.path.substring(1) + (uri.hasQuery ? "?${uri.query}" : ""), name: uri.fragment);
         }

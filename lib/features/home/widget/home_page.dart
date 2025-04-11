@@ -1,5 +1,6 @@
 import 'package:dartx/dartx.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hiddify/core/app_info/app_info_provider.dart';
@@ -13,6 +14,7 @@ import 'package:hiddify/features/profile/model/profile_entity.dart';
 import 'package:hiddify/features/profile/notifier/active_profile_notifier.dart';
 import 'package:hiddify/features/profile/notifier/profile_notifier.dart';
 import 'package:hiddify/features/proxy/active/active_proxy_delay_indicator.dart';
+import 'package:hiddify/features/profile/widget/free_trial_upgrade_modal.dart';
 import 'package:hiddify/features/proxy/active/active_proxy_footer.dart';
 import 'package:hiddify/utils/utils.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -124,6 +126,13 @@ class HomePage extends HookConsumerWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const SizedBox(height: 40),
+
+                          // Test button for upgrade modal (only in debug mode)
+                          if (kDebugMode)
+                            const Padding(
+                              padding: EdgeInsets.only(bottom: 16),
+                              child: ShowUpgradeModalButton(),
+                            ),
 
                           // Logo area (clickable for remote profiles)
                           GestureDetector(
