@@ -11,6 +11,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'general_preferences.g.dart';
 
+// Set to true to show intro page every time for testing
+// Set to false for normal behavior (intro page only on first launch)
 bool _debugIntroPage = false;
 
 abstract class Preferences {

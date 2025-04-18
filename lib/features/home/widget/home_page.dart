@@ -90,7 +90,7 @@ class HomePage extends HookConsumerWidget {
                                     await launchUrl(Uri.parse(profileUrl));
                                   } else if (subdomain.startsWith('server')) {
                                     // Basic profile - open with trigger URL
-                                    final triggerUrl = 'https://ipman.intarnad.com/trigger/?link=${Uri.encodeComponent(profileUrl)}';
+                                    final triggerUrl = 'https://ipman.uk/trigger/?link=${Uri.encodeComponent(profileUrl)}';
                                     await launchUrl(Uri.parse(triggerUrl));
                                   } else {
                                     // Not a recognized format

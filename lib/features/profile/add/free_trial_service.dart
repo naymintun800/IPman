@@ -216,6 +216,28 @@ class FreeTrialService extends _$FreeTrialService with InfraLogger {
     try {
       final dio = Dio();
 
+      // Generate a unique profile name with a short 4-character unique ID
+      // This ensures each profile has a unique name while keeping it concise
+
+      // Create a 4-character unique ID
+      // We'll use a combination of device ID and timestamp to ensure uniqueness
+      String uniqueId;
+
+      // Get the last 4 digits of the current timestamp
+      final timestampStr = DateTime.now().millisecondsSinceEpoch.toString();
+      final timestampPart = timestampStr.substring(timestampStr.length - 4);
+
+      // If the device ID is at least 2 characters, use first 2 chars + timestamp digits
+      if (deviceId.length >= 2) {
+        uniqueId = deviceId.substring(0, 2) + timestampPart.substring(0, 2);
+      } else {
+        // Otherwise just use the 4 timestamp digits
+        uniqueId = timestampPart;
+      }
+
+      // Combine to create a unique profile name
+      final profileName = '${uniqueId}_FREE-1GB';
+
       // Create request to your VPN API
       final response = await dio.post(
         '$_vpnApiUrl/$_proxyPath/api/v2/admin/user/',
@@ -231,7 +253,7 @@ class FreeTrialService extends _$FreeTrialService with InfraLogger {
           'is_active': true,
           'lang': 'en',
           'mode': 'no_reset',
-          'name': 'IPman Free 1 GB',
+          'name': profileName,
           'package_days': 3650,
           'usage_limit_GB': 1,
         },

@@ -24,7 +24,7 @@ class FreeTrialUpgradeModal extends HookConsumerWidget {
     final isAlmostUsed = usageRatio >= 0.90 && usageRatio < 0.99;
 
     // Website URL to purchase a plan
-    const websiteUrl = "https://ipman.com/pricing";
+    const websiteUrl = "https://ipman.uk";
 
     return Dialog(
       shape: RoundedRectangleBorder(

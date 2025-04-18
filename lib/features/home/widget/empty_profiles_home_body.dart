@@ -34,7 +34,7 @@ class EmptyProfilesHomeBody extends HookConsumerWidget {
             // Add the profile using the stored URL
             await ref.read(addProfileProvider.notifier).add(storedUrl);
             if (context.mounted) {
-              const CustomToast.success("Your free 1GB trial profile has been added again.").show(context);
+              const CustomToast.success("သင့် Free 1GB အားပြန်လည်ထည့်သွင်းပြီးပါပြီ").show(context);
             }
             return;
           }
@@ -42,7 +42,7 @@ class EmptyProfilesHomeBody extends HookConsumerWidget {
 
         // Show a message that we're setting up the free trial
         if (context.mounted) {
-          const CustomToast.success("Setting up your free 1GB trial...").show(context);
+          const CustomToast.success("Free 1GB ရယူနေသည်...").show(context);
         }
 
         // Create a free trial profile
@@ -53,7 +53,7 @@ class EmptyProfilesHomeBody extends HookConsumerWidget {
 
         // Show success message
         if (context.mounted) {
-          const CustomToast.success("Your free 1GB trial has been activated!").show(context);
+          const CustomToast.success("Free 1GB ရယူပြီးပါပြီ!").show(context);
         }
       } catch (e) {
         // Handle specific error messages from the free trial service
@@ -61,10 +61,10 @@ class EmptyProfilesHomeBody extends HookConsumerWidget {
           if (e is FreeTrialFailure) {
             CustomToast.error(e.toString()).show(context);
           } else {
-            const CustomToast.error("Could not activate free trial. Please try again later.").show(context);
+            const CustomToast.error("Free 1GB ရယူရန် Error တက်နေသည်။ နောက်မှကြိုးစားပါ။").show(context);
           }
         }
-        debugPrint("Error claiming free trial: $e");
+        debugPrint("Free 1GB ရယူရန် Error တက်နေသည်- $e");
       } finally {
         isClaimingFreeTrial.value = false;
       }
@@ -81,7 +81,7 @@ class EmptyProfilesHomeBody extends HookConsumerWidget {
           ElevatedButton.icon(
             onPressed: isClaimingFreeTrial.value ? null : claimFreeTrial,
             icon: isClaimingFreeTrial.value ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(FluentIcons.gift_24_regular),
-            label: const Text("Get Free 1GB Trial"),
+            label: const Text("Free 1GB ရယူရန်"),
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.primary,
               foregroundColor: Theme.of(context).colorScheme.onPrimary,

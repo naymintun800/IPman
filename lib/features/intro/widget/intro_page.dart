@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:gap/gap.dart';
 import 'package:hiddify/core/analytics/analytics_controller.dart';
-import 'package:hiddify/core/http_client/dio_http_client.dart';
-import 'package:hiddify/core/localization/locale_preferences.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/model/constants.dart';
 import 'package:hiddify/core/model/region.dart';
@@ -15,173 +13,232 @@ import 'package:hiddify/gen/assets.gen.dart';
 import 'package:hiddify/utils/utils.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:sliver_tools/sliver_tools.dart';
-import 'package:timezone_to_country/timezone_to_country.dart';
 
 class IntroPage extends HookConsumerWidget with PresLogger {
   IntroPage({super.key});
 
-  bool locationInfoLoaded = false;
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
-
     final isStarting = useState(false);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    if (!locationInfoLoaded) {
-      autoSelectRegion(ref).then((value) => loggy.debug("Auto Region selection finished!"));
-      locationInfoLoaded = true;
-    }
+    // Set region to 'other' by default
+    // This replaces the auto region selection
+    _setDefaultRegion(ref);
 
     return Scaffold(
-      body: SafeArea(
-        child: CustomScrollView(
-          shrinkWrap: true,
-          slivers: [
-            SliverToBoxAdapter(
-              child: SizedBox(
-                width: 224,
-                height: 224,
+      body: Container(
+        // Clean, modern background using app's color scheme
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: theme.brightness == Brightness.dark
+                ? [
+                    colorScheme.surface,
+                    colorScheme.surface.withOpacity(0.7),
+                  ]
+                : [
+                    colorScheme.primary.withOpacity(0.05),
+                    colorScheme.surface,
+                  ],
+          ),
+        ),
+        child: SafeArea(
+          child: CustomScrollView(
+            shrinkWrap: true,
+            slivers: [
+              // App logo - clean and modern
+              SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Assets.images.logo.svg(),
-                ),
-              ),
-            ),
-            SliverCrossAxisConstrained(
-              maxCrossAxisExtent: 368,
-              child: MultiSliver(
-                children: [
-                  const LocalePrefTile(),
-                  const SliverGap(4),
-                  const RegionPrefTile(),
-                  const SliverGap(4),
-                  const EnableAnalyticsPrefTile(),
-                  const SliverGap(4),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text.rich(
-                      t.intro.termsAndPolicyCaution(
-                        tap: (text) => TextSpan(
-                          text: text,
-                          style: const TextStyle(color: Colors.blue),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () async {
-                              await UriUtils.tryLaunch(
-                                Uri.parse(Constants.termsAndConditionsUrl),
-                              );
-                            },
+                  padding: const EdgeInsets.only(top: 60),
+                  child: Column(
+                    children: [
+                      // Logo without container
+                      SizedBox(
+                        width: 140, // Smaller logo size
+                        height: 140,
+                        child: Hero(
+                          tag: 'app_logo',
+                          child: Assets.images.logo.svg(),
                         ),
                       ),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+
+                      // App name with stylish text
+                    ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 24,
-                    ),
-                    child: FilledButton(
-                      onPressed: () async {
-                        if (isStarting.value) return;
-                        isStarting.value = true;
-                        if (!ref.read(analyticsControllerProvider).requireValue) {
-                          loggy.info("disabling analytics per user request");
-                          try {
-                            await ref.read(analyticsControllerProvider.notifier).disableAnalytics();
-                          } catch (error, stackTrace) {
-                            loggy.error(
-                              "could not disable analytics",
-                              error,
-                              stackTrace,
-                            );
-                          }
-                        }
-                        await ref.read(Preferences.introCompleted.notifier).update(true);
-                      },
-                      child: isStarting.value
-                          ? LinearProgressIndicator(
-                              backgroundColor: Colors.transparent,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            )
-                          : Text(t.intro.start),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ],
+
+              // Tagline
+
+              SliverCrossAxisConstrained(
+                maxCrossAxisExtent: 368,
+                child: MultiSliver(
+                  children: [
+                    const Gap(24),
+
+                    // Language selection - sleek design
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 24),
+                      decoration: BoxDecoration(
+                        color: theme.brightness == Brightness.dark ? colorScheme.surface.withOpacity(0.3) : colorScheme.primary.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: colorScheme.primary.withOpacity(0.1),
+                        ),
+                      ),
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 4),
+                        child: LocalePrefTile(),
+                      ),
+                    ),
+
+                    const Gap(16),
+
+                    // Analytics option - matching design
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 24),
+                      decoration: BoxDecoration(
+                        color: theme.brightness == Brightness.dark ? colorScheme.surface.withOpacity(0.3) : colorScheme.primary.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: colorScheme.primary.withOpacity(0.1),
+                        ),
+                      ),
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 4),
+                        child: EnableAnalyticsPrefTile(),
+                      ),
+                    ),
+
+                    const Gap(24),
+
+                    // Terms and conditions
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Text.rich(
+                        t.intro.termsAndPolicyCaution(
+                          tap: (text) => TextSpan(
+                            text: text,
+                            style: TextStyle(color: colorScheme.primary),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () async {
+                                await UriUtils.tryLaunch(
+                                  Uri.parse(Constants.termsAndConditionsUrl),
+                                );
+                              },
+                          ),
+                        ),
+                        style: theme.textTheme.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+
+                    // Get Started button - modern and sleek
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 32,
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: LinearGradient(
+                            colors: [
+                              colorScheme.primary,
+                              colorScheme.primary.withOpacity(0.5),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: colorScheme.primary.withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: () async {
+                              if (isStarting.value) return;
+                              isStarting.value = true;
+                              if (!ref.read(analyticsControllerProvider).requireValue) {
+                                loggy.info("disabling analytics per user request");
+                                try {
+                                  await ref.read(analyticsControllerProvider.notifier).disableAnalytics();
+                                } catch (error, stackTrace) {
+                                  loggy.error(
+                                    "could not disable analytics",
+                                    error,
+                                    stackTrace,
+                                  );
+                                }
+                              }
+                              await ref.read(Preferences.introCompleted.notifier).update(true);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              width: double.infinity,
+                              alignment: Alignment.center,
+                              child: isStarting.value
+                                  ? SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 3,
+                                        color: colorScheme.onPrimary,
+                                      ),
+                                    )
+                                  : Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          t.intro.start,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: 1.2,
+                                            color: colorScheme.onPrimary,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Icon(
+                                          Icons.arrow_forward_rounded,
+                                          color: colorScheme.onPrimary,
+                                          size: 20,
+                                        ),
+                                      ],
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Future<void> autoSelectRegion(WidgetRef ref) async {
-    try {
-      final countryCode = await TimeZoneToCountry.getLocalCountryCode();
-      final regionLocale = _getRegionLocale(countryCode);
-      loggy.debug(
-        'Timezone Region: ${regionLocale.region} Locale: ${regionLocale.locale}',
-      );
-      await ref.read(ConfigOptions.region.notifier).update(regionLocale.region);
-      await ref.watch(ConfigOptions.directDnsAddress.notifier).reset();
-      await ref.read(localePreferencesProvider.notifier).changeLocale(regionLocale.locale);
-      return;
-    } catch (e) {
-      loggy.warning(
-        'Could not get the local country code based on timezone',
-        e,
-      );
-    }
+  // Simple method to set region to 'other' by default
+  void _setDefaultRegion(WidgetRef ref) {
+    // Set region to 'other'
+    ref.read(ConfigOptions.region.notifier).update(Region.other);
 
-    try {
-      final DioHttpClient client = DioHttpClient(
-        timeout: const Duration(seconds: 2),
-        userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0",
-        debug: true,
-      );
-      final response = await client.get<Map<String, dynamic>>('https://api.ip.sb/geoip/');
-
-      if (response.statusCode == 200) {
-        final jsonData = response.data!;
-        final regionLocale = _getRegionLocale(jsonData['country_code']?.toString() ?? "");
-
-        loggy.debug(
-          'Region: ${regionLocale.region} Locale: ${regionLocale.locale}',
-        );
-        await ref.read(ConfigOptions.region.notifier).update(regionLocale.region);
-        await ref.read(localePreferencesProvider.notifier).changeLocale(regionLocale.locale);
-      } else {
-        loggy.warning('Request failed with status: ${response.statusCode}');
-      }
-    } catch (e) {
-      loggy.warning('Could not get the local country code from ip');
-    }
-  }
-
-  RegionLocale _getRegionLocale(String country) {
-    switch (country.toUpperCase()) {
-      case "IR":
-        return RegionLocale(Region.ir, AppLocale.en);
-      case "CN":
-        return RegionLocale(Region.cn, AppLocale.en);
-      case "RU":
-        return RegionLocale(Region.ru, AppLocale.en);
-      case "AF":
-        return RegionLocale(Region.af, AppLocale.en);
-      case "BR":
-        return RegionLocale(Region.other, AppLocale.en);
-      case "TR":
-        return RegionLocale(Region.other, AppLocale.my);
-      default:
-        return RegionLocale(Region.other, AppLocale.my);
-    }
+    // Reset DNS address to ensure it's properly configured
+    ref.read(ConfigOptions.directDnsAddress.notifier).reset();
   }
 }
 
-class RegionLocale {
-  final Region region;
-  final AppLocale locale;
-
-  RegionLocale(this.region, this.locale);
-}
+// Removed RegionLocale class as it's no longer needed
