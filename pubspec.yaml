@@ -1,7 +1,7 @@
 name: hiddify
 description: Cross Platform Multi Protocol Proxy Frontend.
 publish_to: "none"
-version: 1.0.0+10000
+version: 1.0.0+10001
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -92,7 +92,7 @@ dependencies:
   json_path: ^0.7.1
   # permission_handler: ^11.3.0 # is not compatible with windows
   #flutter_easy_permission: ^1.1.2
-  flutter_easy_permission: 
+  flutter_easy_permission:
      git: https://github.com/unger1984/flutter_easy_permission.git
   in_app_review: ^2.0.9
   # circle_flags: ^4.0.2

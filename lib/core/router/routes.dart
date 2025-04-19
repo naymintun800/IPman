@@ -119,6 +119,10 @@ class MobileWrapperRoute extends ShellRouteData {
           path: "quick-settings",
           name: QuickSettingsRoute.name,
         ),
+        TypedGoRoute<ProxiesModalRoute>(
+          path: "proxies-modal",
+          name: ProxiesModalRoute.name,
+        ),
       ],
     ),
     TypedGoRoute<ProxiesRoute>(

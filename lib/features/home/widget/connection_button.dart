@@ -6,6 +6,7 @@ import 'package:hiddify/core/widget/animated_text.dart';
 import 'package:hiddify/features/config_option/notifier/config_option_notifier.dart';
 import 'package:hiddify/features/connection/model/connection_status.dart';
 import 'package:hiddify/features/connection/notifier/connection_notifier.dart';
+import 'package:hiddify/utils/platform_utils.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class ConnectionButton extends HookConsumerWidget {
@@ -36,17 +37,18 @@ class ConnectionButton extends HookConsumerWidget {
       _ => t.connection.reconnect,
     };
 
-    // Get screen size for responsiveness
-    final screenWidth = MediaQuery.of(context).size.width;
-
     // ===== BUTTON SIZE CUSTOMIZATION =====
     // Modify these values to change button dimensions
 
-    // Button width - increase for wider button
-    final toggleWidth = screenWidth < 600 ? screenWidth * 0.45 : 240.0;
+    // Use platform detection for better sizing
+    final isDesktopPlatform = PlatformUtils.isDesktop;
+    final screenWidth = MediaQuery.of(context).size.width;
 
-    // Button height - modify this multiplier (0.45) to make button taller or shorter
-    final toggleHeight = toggleWidth * 0.45;
+    // Button width - smaller on desktop to prevent overlap issues
+    final toggleWidth = isDesktopPlatform ? 180.0 : screenWidth * 0.45;
+
+    // Button height - smaller on desktop
+    final toggleHeight = isDesktopPlatform ? 85.0 : toggleWidth * 0.45;
 
     // Border width - used for calculations
     const borderWidth = 5.0;

@@ -30,7 +30,7 @@
     "grantPermission": "Permission ပေးမည်"
   },
   "intro": {
-    "termsAndPolicyCaution(rich)": "By Continuing You Agree With ${tap(@:about.termsAndConditions)}",
+    "termsAndPolicyCaution(rich)": "ဤ App အားသုံးဆွဲခြင်းဖြင့် IPမန်း၏ ${tap(@:about.termsAndConditions)} အားလက်ခံပါသည်။",
     "start": "စမည်"
   },
   "home": {
@@ -192,8 +192,8 @@
         "light": "အလင်း Mode",
         "black": "အမဲ Mode"
       },
-      "enableAnalytics": "Enable Analytics",
-      "enableAnalyticsMsg": "Give permission to collect analytics and send crash reports to improve the app",
+      "enableAnalytics": "Analytics ဖွင့်မည်။",
+      "enableAnalyticsMsg": "Analytics ဖွင့်ခြင်းသည် App ၏ Error များ ချိုရွင်းချက်များကို ကောက်ခံရန် သင့်အနေနှင့်ကူညီ ၍ခွင့်ပြုခြင်းဖြစ်ပါသည်။",
       "autoStart": "Start At Login",
       "silentStart": "Start Minimized",
       "openWorkingDir": "Open Working Directory",

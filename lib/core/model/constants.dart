@@ -5,8 +5,8 @@ abstract class Constants {
   static const githubLatestReleaseUrl = "https://github.com/yourusername/ipman/releases/latest";
   static const appCastUrl = "https://raw.githubusercontent.com/yourusername/ipman/main/appcast.xml";
   static const telegramChannelUrl = "https://t.me/ipman";
-  static const privacyPolicyUrl = "https://ipman.com/privacy-policy/";
-  static const termsAndConditionsUrl = "https://ipman.com/terms/";
+  static const privacyPolicyUrl = "https://ipman.uk/policy/";
+  static const termsAndConditionsUrl = "https://ipman.uk/policy/";
   static const cfWarpPrivacyPolicy = "https://www.cloudflare.com/application/privacypolicy/";
   static const cfWarpTermsOfService = "https://www.cloudflare.com/application/terms/";
 }

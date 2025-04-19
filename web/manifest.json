@@ -1,11 +1,11 @@
 {
-    "name": "Hiddify",
-    "short_name": "Hiddify",
+    "name": "IPman",
+    "short_name": "IPman",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "Hiddify",
+    "description": "IPman",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

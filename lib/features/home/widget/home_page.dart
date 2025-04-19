@@ -12,10 +12,10 @@ import 'package:hiddify/features/home/widget/connection_button.dart';
 import 'package:hiddify/features/home/widget/empty_profiles_home_body.dart';
 import 'package:hiddify/features/profile/model/profile_entity.dart';
 import 'package:hiddify/features/profile/notifier/active_profile_notifier.dart';
-import 'package:hiddify/features/profile/notifier/profile_notifier.dart';
 import 'package:hiddify/features/proxy/active/active_proxy_delay_indicator.dart';
-import 'package:hiddify/features/profile/widget/free_trial_upgrade_modal.dart';
+//import 'package:hiddify/features/profile/widget/free_trial_upgrade_modal.dart';
 import 'package:hiddify/features/proxy/active/active_proxy_footer.dart';
+import 'package:hiddify/utils/platform_utils.dart';
 import 'package:hiddify/utils/utils.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -128,18 +128,17 @@ class HomePage extends HookConsumerWidget {
                           const SizedBox(height: 40),
 
                           // Test button for upgrade modal (only in debug mode)
-                          if (kDebugMode)
-                            const Padding(
-                              padding: EdgeInsets.only(bottom: 16),
-                              child: ShowUpgradeModalButton(),
-                            ),
+                          // if (kDebugMode)
+                          //   const Padding(
+                          //     padding: EdgeInsets.only(bottom: 16),
+                          //     child: ShowUpgradeModalButton(),
+                          //   ),
 
-                          // Logo area (clickable for remote profiles)
+                          // Logo area (clickable to open website)
                           GestureDetector(
                             onTap: () {
-                              if (profile is RemoteProfileEntity) {
-                                ref.read(updateProfileProvider(profile.id).notifier).updateProfile(profile as RemoteProfileEntity);
-                              }
+                              // Open IPman website
+                              launchUrl(Uri.parse('https://ipman.uk'));
                             },
                             child: SizedBox(
                               width: 160,
@@ -275,7 +274,8 @@ class HomePage extends HookConsumerWidget {
 
                           const SizedBox(height: 5),
                           const ActiveProxyDelayIndicator(),
-                          const SizedBox(height: 40),
+                          // Add more space at the bottom on desktop to prevent overlap
+                          SizedBox(height: PlatformUtils.isDesktop ? 80 : 40),
                         ],
                       ),
                     ),

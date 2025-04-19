@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:gap/gap.dart';
 import 'package:hiddify/core/analytics/analytics_controller.dart';
+import 'package:hiddify/core/localization/locale_preferences.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/model/constants.dart';
 import 'package:hiddify/core/model/region.dart';
@@ -27,6 +28,9 @@ class IntroPage extends HookConsumerWidget with PresLogger {
     // Set region to 'other' by default
     // This replaces the auto region selection
     _setDefaultRegion(ref);
+
+    // Set Myanmar language as default
+    _setDefaultLanguage(ref);
 
     return Scaffold(
       body: Container(
@@ -62,7 +66,7 @@ class IntroPage extends HookConsumerWidget with PresLogger {
                         height: 140,
                         child: Hero(
                           tag: 'app_logo',
-                          child: Assets.images.logo.svg(),
+                          child: Assets.images.ipmanLogo.svg(),
                         ),
                       ),
 
@@ -238,6 +242,12 @@ class IntroPage extends HookConsumerWidget with PresLogger {
 
     // Reset DNS address to ensure it's properly configured
     ref.read(ConfigOptions.directDnsAddress.notifier).reset();
+  }
+
+  // Method to set Myanmar language as default
+  void _setDefaultLanguage(WidgetRef ref) {
+    // Set language to Myanmar (my)
+    ref.read(localePreferencesProvider.notifier).changeLocale(AppLocale.my);
   }
 }
 

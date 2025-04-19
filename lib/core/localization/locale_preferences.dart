@@ -10,13 +10,13 @@ class LocalePreferences extends _$LocalePreferences with AppLogger {
   @override
   AppLocale build() {
     final persisted = ref.watch(sharedPreferencesProvider).requireValue.getString("locale");
-    if (persisted == null) return AppLocaleUtils.findDeviceLocale();
+    if (persisted == null) return AppLocale.my; // Default to Myanmar language
 
     try {
       return AppLocale.values.byName(persisted);
     } catch (e) {
       loggy.error("error setting locale: [$persisted]", e);
-      return AppLocale.en; // Default to English if there's an error
+      return AppLocale.my; // Default to Myanmar if there's an error
     }
   }
 

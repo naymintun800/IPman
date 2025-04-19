@@ -3,12 +3,14 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:hiddify/core/localization/translations.dart';
-import 'package:hiddify/core/router/routes.dart'; // Add the correct import
+import 'package:hiddify/core/router/routes.dart';
+import 'package:hiddify/features/profile/model/profile_entity.dart';
+import 'package:hiddify/features/profile/notifier/active_profile_notifier.dart';
+import 'package:hiddify/features/profile/notifier/profile_notifier.dart';
 import 'package:hiddify/features/proxy/active/active_proxy_notifier.dart';
 import 'package:hiddify/features/proxy/active/ip_widget.dart';
-//import 'package:go_router/go_router.dart';
+import 'package:hiddify/utils/platform_utils.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:hiddify/core/localization/translations.dart';
 
 class ActiveProxyFooter extends HookConsumerWidget {
   const ActiveProxyFooter({super.key});
@@ -20,18 +22,21 @@ class ActiveProxyFooter extends HookConsumerWidget {
     final ipInfo = ref.watch(ipInfoNotifierProvider);
     final theme = Theme.of(context);
 
+    // Use platform detection for better sizing
+    final isDesktop = PlatformUtils.isDesktop;
+
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isDesktop ? 8 : 16),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 200),
+          constraints: BoxConstraints(maxWidth: isDesktop ? 180 : 200),
           child: GestureDetector(
             onTap: () {
               // Navigate to proxies modal (not the refresh button)
               const ProxiesModalRoute().push(context);
             },
             child: Container(
-              height: 80,
+              height: isDesktop ? 60 : 80,
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(100),
@@ -48,19 +53,26 @@ class ActiveProxyFooter extends HookConsumerWidget {
                 children: [
                   // Refresh button
                   Padding(
-                    padding: const EdgeInsets.only(left: 5, right: 0),
+                    padding: const EdgeInsets.only(left: 5),
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        onTap: () {
+                        onTap: () async {
+                          // Refresh IP info
                           ref.read(ipInfoNotifierProvider.notifier).refresh();
+
+                          // Also update the current profile if available
+                          final activeProfile = await ref.read(activeProfileProvider.future);
+                          if (activeProfile is RemoteProfileEntity) {
+                            ref.read(updateProfileProvider(activeProfile.id).notifier).updateProfile(activeProfile);
+                          }
                         },
                         customBorder: const CircleBorder(),
                         highlightColor: theme.colorScheme.primary.withOpacity(0.1),
                         splashColor: theme.colorScheme.primary.withOpacity(0.2),
                         child: Ink(
-                          width: 70,
-                          height: 70,
+                          width: isDesktop ? 50 : 70,
+                          height: isDesktop ? 50 : 70,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
@@ -71,7 +83,7 @@ class ActiveProxyFooter extends HookConsumerWidget {
                           child: Icon(
                             FluentIcons.arrow_sync_20_regular,
                             color: theme.colorScheme.primary,
-                            size: 30,
+                            size: isDesktop ? 24 : 30,
                           ),
                         ),
                       ),
@@ -90,9 +102,9 @@ class ActiveProxyFooter extends HookConsumerWidget {
                                 Flexible(
                                   child: Text(
                                     info.countryCode,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 18,
+                                      fontSize: isDesktop ? 14 : 18,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -102,21 +114,21 @@ class ActiveProxyFooter extends HookConsumerWidget {
                           AsyncError() => Center(
                               child: Text(
                                 t.proxyFooter.check,
-                                style: const TextStyle(fontSize: 14),
+                                style: TextStyle(fontSize: isDesktop ? 12 : 14),
                               ),
                             ),
                           _ => Center(
                               child: Text(
                                 t.proxyFooter.checking,
-                                style: const TextStyle(fontSize: 14),
+                                style: TextStyle(fontSize: isDesktop ? 12 : 14),
                               ),
                             ),
                         },
                       _ => Center(
                           child: Text(
                             t.proxyFooter.notConnected,
-                            style: const TextStyle(
-                              fontSize: 14,
+                            style: TextStyle(
+                              fontSize: isDesktop ? 12 : 14,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
