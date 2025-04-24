@@ -187,8 +187,8 @@ class HomePage extends HookConsumerWidget {
                                   // 10TB
                                   usageText = "Unlimited";
                                 } else {
-                                  final consumption = subInfo.consumption?.sizeGB() ?? '0';
-                                  final total = subInfo.total?.sizeGB() ?? '∞';
+                                  final consumption = subInfo.consumption.sizeGB();
+                                  final total = subInfo.total.sizeGB();
                                   usageText = "$consumption/$total";
                                 }
 

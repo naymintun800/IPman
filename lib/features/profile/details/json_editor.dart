@@ -1,11 +1,10 @@
 library json_editor_flutter;
 
-import 'dart:convert';
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
-import 'dart:ui';
 
-import 'package:dartx/dartx.dart';
+//import 'package:dartx/dartx.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

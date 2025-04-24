@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/model/constants.dart';
-import 'package:hiddify/core/router/router.dart';
+//import 'package:hiddify/core/router/router.dart';
 import 'package:hiddify/features/config_option/data/config_option_repository.dart';
 import 'package:hiddify/features/connection/model/connection_status.dart';
 import 'package:hiddify/features/connection/notifier/connection_notifier.dart';
@@ -61,13 +61,13 @@ class SystemTrayNotifier extends _$SystemTrayNotifier with AppLogger {
     }
     if (!Platform.isLinux) await trayManager.setToolTip(tooltip);
 
-    final destinations = <(String label, String location)>[
-      (t.home.pageTitle, const HomeRoute().location),
-      (t.proxies.pageTitle, const ProxiesRoute().location),
-      (t.logs.pageTitle, const LogsOverviewRoute().location),
-      (t.settings.pageTitle, const SettingsRoute().location),
-      (t.about.pageTitle, const AboutRoute().location),
-    ];
+    // final destinations = <(String label, String location)>[
+    //   (t.home.pageTitle, const HomeRoute().location),
+    //   (t.proxies.pageTitle, const ProxiesRoute().location),
+    //   (t.logs.pageTitle, const LogsOverviewRoute().location),
+    //   (t.settings.pageTitle, const SettingsRoute().location),
+    //   (t.about.pageTitle, const AboutRoute().location),
+    // ];
 
     // loggy.debug('updating system tray');
 
@@ -172,7 +172,8 @@ class SystemTrayNotifier extends _$SystemTrayNotifier with AppLogger {
           }
       }
     }
-    final isDarkMode = false;
+    final Brightness brightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
+    final isDarkMode = brightness == Brightness.dark;
     switch (status) {
       case Connected():
         return Assets.images.trayIconConnectedPng.path;

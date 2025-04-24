@@ -118,7 +118,7 @@ class AddProfile extends _$AddProfile with AppLogger {
         final _prefs = ref.read(sharedPreferencesProvider).requireValue;
         final _warp = ref.read(warpOptionNotifierProvider.notifier);
 
-        final consent = false && (_prefs.getBool(WarpOptionNotifier.warpConsentGiven) ?? false);
+        const consent = false;
 
         final t = ref.read(translationsProvider);
         final notification = ref.read(inAppNotificationControllerProvider);
