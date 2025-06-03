@@ -354,6 +354,24 @@ class ProfileActionsMenu extends HookConsumerWidget {
       },
     );
 
+    bool shouldShowShareButton = false;
+    if (profile case RemoteProfileEntity(:final url)) {
+      try {
+        final uri = Uri.parse(url);
+        final host = uri.host;
+        final domainParts = host.split('.');
+        if (domainParts.isNotEmpty) {
+          final subdomain = domainParts.first;
+          if (subdomain == 'profile' || subdomain.startsWith('server')) {
+            shouldShowShareButton = true;
+          }
+        }
+      } catch (e) {
+        // If parsing fails, treat as not sharable
+        shouldShowShareButton = false;
+      }
+    }
+
     final menuItems = [
       if (profile case RemoteProfileEntity())
         AdaptiveMenuItem(
@@ -366,49 +384,50 @@ class ProfileActionsMenu extends HookConsumerWidget {
             ref.read(updateProfileProvider(profile.id).notifier).updateProfile(profile as RemoteProfileEntity);
           },
         ),
-      AdaptiveMenuItem(
-        title: t.profile.share.buttonText,
-        icon: AdaptiveIcon(context).share,
-        subItems: [
-          if (profile case RemoteProfileEntity(:final url, :final name)) ...[
-            AdaptiveMenuItem(
-              title: t.profile.share.exportSubLinkToClipboard,
-              onTap: () async {
-                final link = LinkParser.generateSubShareLink(url, name);
-                if (link.isNotEmpty) {
-                  await Clipboard.setData(ClipboardData(text: link));
-                  if (context.mounted) {
-                    CustomToast(t.profile.share.exportToClipboardSuccess).show(context);
+      if (shouldShowShareButton)
+        AdaptiveMenuItem(
+          title: t.profile.share.buttonText,
+          icon: AdaptiveIcon(context).share,
+          subItems: [
+            if (profile case RemoteProfileEntity(:final url, :final name)) ...[
+              AdaptiveMenuItem(
+                title: t.profile.share.exportSubLinkToClipboard,
+                onTap: () async {
+                  final link = LinkParser.generateSubShareLink(url, name);
+                  if (link.isNotEmpty) {
+                    await Clipboard.setData(ClipboardData(text: link));
+                    if (context.mounted) {
+                      CustomToast(t.profile.share.exportToClipboardSuccess).show(context);
+                    }
                   }
-                }
-              },
-            ),
+                },
+              ),
+              AdaptiveMenuItem(
+                title: t.profile.share.subLinkQrCode,
+                onTap: () async {
+                  final link = LinkParser.generateSubShareLink(url, name);
+                  if (link.isNotEmpty) {
+                    await QrCodeDialog(
+                      link,
+                      message: name,
+                    ).show(context);
+                  }
+                },
+              ),
+            ],
             AdaptiveMenuItem(
-              title: t.profile.share.subLinkQrCode,
+              title: t.profile.share.exportConfigToClipboard,
               onTap: () async {
-                final link = LinkParser.generateSubShareLink(url, name);
-                if (link.isNotEmpty) {
-                  await QrCodeDialog(
-                    link,
-                    message: name,
-                  ).show(context);
+                if (exportConfigMutation.state.isInProgress) {
+                  return;
                 }
+                exportConfigMutation.setFuture(
+                  ref.read(profilesOverviewNotifierProvider.notifier).exportConfigToClipboard(profile),
+                );
               },
             ),
           ],
-          AdaptiveMenuItem(
-            title: t.profile.share.exportConfigToClipboard,
-            onTap: () async {
-              if (exportConfigMutation.state.isInProgress) {
-                return;
-              }
-              exportConfigMutation.setFuture(
-                ref.read(profilesOverviewNotifierProvider.notifier).exportConfigToClipboard(profile),
-              );
-            },
-          ),
-        ],
-      ),
+        ),
       // Edit button removed as requested
       AdaptiveMenuItem(
         icon: FluentIcons.delete_24_regular,
