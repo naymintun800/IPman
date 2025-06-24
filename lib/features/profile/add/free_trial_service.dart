@@ -34,8 +34,6 @@ class FreeTrialService extends _$FreeTrialService with InfraLogger {
   // VPN API configuration from .env
   String get _vpnApiUrl => dotenv.env['VPN_API_URL'] ?? '';
   String get _vpnApiKey => dotenv.env['HIDDIFY_API_KEY'] ?? '';
-  String get _userPath => dotenv.env['USER_PATH'] ?? '';
-  String get _proxyPath => dotenv.env['PROXY_PATH'] ?? '';
 
   @override
   Future<bool> build() async {
@@ -240,22 +238,25 @@ class FreeTrialService extends _$FreeTrialService with InfraLogger {
 
       // Create request to your VPN API
       final response = await dio.post(
-        '$_vpnApiUrl/$_proxyPath/api/v2/admin/user/',
+        '$_vpnApiUrl/api/user',
         options: Options(
           headers: {
             'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Hiddify-API-Key': _vpnApiKey,
+            'Authorization': _vpnApiKey,
           },
         ),
         data: {
-          'enable': true,
-          'is_active': true,
-          'lang': 'en',
-          'mode': 'no_reset',
-          'name': profileName,
-          'package_days': 3650,
-          'usage_limit_GB': 1,
+          'data_limit': 1073741824, // 1GB in bytes
+          'data_limit_reset_strategy': 'no_reset',
+          'expire': 0,
+          'inbounds': {
+            'vless': ['VLESS TCP REALITY']
+          },
+          'proxies': {
+            'vless': {'flow': 'xtls-rprx-vision'}
+          },
+          'status': 'active',
+          'username': profileName,
         },
       );
 
@@ -264,14 +265,13 @@ class FreeTrialService extends _$FreeTrialService with InfraLogger {
       }
 
       final data = response.data as Map<String, dynamic>;
-      final uuid = data['uuid'] as String?;
+      final subscriptionUrl = data['subscription_url'] as String?;
 
-      if (uuid == null || uuid.isEmpty) {
-        throw const FreeTrialFailure('Invalid UUID received from VPN API');
+      if (subscriptionUrl == null || subscriptionUrl.isEmpty) {
+        throw const FreeTrialFailure('Invalid subscription_url received from VPN API');
       }
 
-      // Construct subscription URL
-      return '$_vpnApiUrl/$_userPath/$uuid/';
+      return subscriptionUrl;
     } catch (e) {
       loggy.error('Error creating free trial profile', e);
       throw FreeTrialFailure('Failed to create VPN profile: $e');
