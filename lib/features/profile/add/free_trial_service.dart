@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hiddify/utils/custom_loggers.dart';
@@ -97,6 +98,36 @@ class FreeTrialService extends _$FreeTrialService with InfraLogger {
     } catch (e, stack) {
       loggy.error('Error claiming free trial', e, stack);
       throw FreeTrialFailure('Failed to claim free trial: $e');
+    }
+  }
+
+  Future<String> forceClaimFreeTrialForDebug() async {
+    if (!kDebugMode) {
+      throw FreeTrialFailure('This feature is only available in debug mode.');
+    }
+
+    try {
+      loggy.info('Forcing new free trial for debugging');
+
+      // We can reuse the existing deviceId logic, but add a debug suffix
+      final deviceId = await _getOrCreateDeviceId();
+      final effectiveDeviceId = "$deviceId-DEBUG-FORCED-${DateTime.now().millisecondsSinceEpoch}";
+
+      // Create new 1GB profile
+      final subscriptionUrl = await _createFreeTrialProfile(effectiveDeviceId);
+
+      // Save to NocoDB for tracking
+      await _saveClaimToNocoDB(effectiveDeviceId, subscriptionUrl);
+
+      // We don't set the local claimed flag to allow multiple claims for debugging
+      // We can store the latest URL though
+      await _secureStorage.write(key: _subscriptionUrlKey, value: subscriptionUrl);
+
+      loggy.info('Forced free trial successful. New URL: $subscriptionUrl');
+      return subscriptionUrl;
+    } catch (e, stack) {
+      loggy.error('Error forcing free trial', e, stack);
+      throw FreeTrialFailure('Failed to force claim free trial: $e');
     }
   }
 

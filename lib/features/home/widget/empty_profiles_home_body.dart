@@ -1,4 +1,5 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:gap/gap.dart';
@@ -16,6 +17,32 @@ class EmptyProfilesHomeBody extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
     final isClaimingFreeTrial = useState(false);
+    final isForcingFreeTrial = useState(false);
+
+    Future<void> forceClaimFreeTrial() async {
+      if (isForcingFreeTrial.value) return;
+
+      try {
+        isForcingFreeTrial.value = true;
+        if (context.mounted) {
+          const CustomToast("Forcing new free trial...").show(context);
+        }
+
+        final subscriptionUrl = await ref.read(freeTrialServiceProvider.notifier).forceClaimFreeTrialForDebug();
+
+        await ref.read(addProfileProvider.notifier).add(subscriptionUrl);
+
+        if (context.mounted) {
+          const CustomToast.success("Debug free trial added!").show(context);
+        }
+      } catch (e) {
+        if (context.mounted) {
+          CustomToast.error(e.toString()).show(context);
+        }
+      } finally {
+        isForcingFreeTrial.value = false;
+      }
+    }
 
     Future<void> claimFreeTrial() async {
       if (isClaimingFreeTrial.value) return;
@@ -77,6 +104,25 @@ class EmptyProfilesHomeBody extends HookConsumerWidget {
         children: [
           Text(t.home.emptyProfilesMsg),
           const Gap(24),
+          // Debug Button
+          if (kDebugMode) ...[
+            ElevatedButton.icon(
+              onPressed: isForcingFreeTrial.value ? null : forceClaimFreeTrial,
+              icon: isForcingFreeTrial.value
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.bug_report),
+              label: const Text("Force New 1GB (Debug)"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+              ),
+            ),
+            const Gap(16),
+          ],
           // Free 1GB Trial Button
           ElevatedButton.icon(
             onPressed: isClaimingFreeTrial.value ? null : claimFreeTrial,
